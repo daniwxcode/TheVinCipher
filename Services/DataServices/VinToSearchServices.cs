@@ -19,7 +19,7 @@ namespace Services.DataServices
         {
             _repository = hermes;
         }
-        public async void Ajouter (string element)
+        public async Task Ajouter (string element)
         {
             var item = new Requests()
             {
@@ -27,9 +27,10 @@ namespace Services.DataServices
             };
             try
             {
-                await _repository.Set<Requests>().AddAsync(item);
+                await _repository.AddAsync(item);
                 await _repository.SaveChangesAsync();
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 //Ignore
             }

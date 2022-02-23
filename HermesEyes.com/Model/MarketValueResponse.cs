@@ -24,5 +24,11 @@ namespace HermesEyes.com.Model
             Data = null;
             Message = "Impossible de trouver une côte pour cette voiture nos développeurs vous reviendrons";
         }
+        public MarketValueResponse (string message)
+        {
+            Success = false;
+            Data = null;
+            Message = message;
+        }
     }
 }

@@ -1,9 +1,11 @@
+using HermesEyes.com.Model;
+
 using Infrastructure.Contexts;
+
+using Microsoft.EntityFrameworkCore;
 
 using Services.DataServices;
 using Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
-using Domaine.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 ConfigurationManager configuration = builder.Configuration;
@@ -15,12 +17,11 @@ builder.Services.AddDbContext<HermesContext>(option =>
     
 });
 
-
-builder.Services.AddScoped<ICarService, BaseCarServices>();
+builder.Services.AddSingleton<TokensProvider>(_ => new TokensProvider(configuration));
 builder.Services.AddScoped<ICrudServices, VinToSearchServices>();
+builder.Services.AddScoped<ICarService, BaseCarServices>();
+
 builder.Services.AddControllers();
-
-
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
