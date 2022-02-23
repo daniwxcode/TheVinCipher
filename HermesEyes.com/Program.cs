@@ -3,6 +3,8 @@ using Infrastructure.Contexts;
 using Services.DataServices;
 using Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Domaine.Entities;
+
 var builder = WebApplication.CreateBuilder(args);
 ConfigurationManager configuration = builder.Configuration;
 // Add services to the container.
@@ -15,6 +17,7 @@ builder.Services.AddDbContext<HermesContext>(option =>
 
 
 builder.Services.AddScoped<ICarService, BaseCarServices>();
+builder.Services.AddScoped<ICrudServices, VinToSearchServices>();
 builder.Services.AddControllers();
 
 
