@@ -4,12 +4,6 @@ using Infrastructure.Contexts;
 
 using Services.Interfaces;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Services.DataServices
 {
     public class BaseCarServices : ICarService
@@ -26,7 +20,7 @@ namespace Services.DataServices
             var car = new Car();
             var cars = new List<Car>();
             int taille = carVin.Length;
-            
+
             int limit = 0;
             switch (taille)
             {
@@ -41,7 +35,7 @@ namespace Services.DataServices
                         break;
                     }
             }
-            car = _Repository.Cars.Where(c => c.Vin.Substring(0, limit) == carVin.Substring(0,limit)).FirstOrDefault();
+            car = _Repository.Cars.Where(c => c.Vin.Substring(0, limit) == carVin.Substring(0, limit)).FirstOrDefault();
             if (car == null)
             {
                 return null;
@@ -99,14 +93,14 @@ namespace Services.DataServices
                 }
             }
 
-            var proche = _Repository.Cars.Where(c => c.Vin.Substring(0, limit) == carVin.Substring(0,limit)).OrderBy(t => t.ValueDate).LastOrDefault().MarketValue;
+            var proche = _Repository.Cars.Where(c => c.Vin.Substring(0, limit) == carVin.Substring(0, limit)).OrderBy(t => t.ValueDate).LastOrDefault().MarketValue;
 
             var diff = Math.Abs(proche - cartemoin.MarketValue);
             var somme = distribution.Sum(i => (i.ValeurMoyenne * i.Effectif));
             var effectif = distribution.Sum(c => c.Effectif);
             var groupe = distribution.Count();
-           
-           
+
+
             int age = DateTime.Now.Year - car.Year;
             int ajout = 0;
             if (age < 5)
@@ -118,7 +112,7 @@ namespace Services.DataServices
                 }
                 else
                 {
-                    ajout =diff;
+                    ajout = diff;
                 }
 
             }
@@ -127,15 +121,15 @@ namespace Services.DataServices
                 if (age > 20)
                 {
                     Random rnd = new Random();
-                    int taux = rnd.Next(1,13);
-                    ajout =(int) car.MarketValue*(taux/100);
+                    int taux = rnd.Next(1, 13);
+                    ajout = car.MarketValue * (taux / 100);
                 }
             }
 
 
             car.Vin = carVin;
             car.ValueDate = DateTime.Now;
-            car.MarketValue = (int)(somme / effectif)+new Random().Next(0,ajout);
+            car.MarketValue = (int)(somme / effectif) + new Random().Next(0, ajout);
             car.ID = 0;
             //try
             //{

@@ -1,12 +1,5 @@
 ﻿using Domaine.Abstracts;
 
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Domaine.Entities
 {
     public class Car : BaseEntity
@@ -38,7 +31,7 @@ namespace Domaine.Entities
         {
 
         }
-        public Car(string vin)
+        public Car (string vin)
         {
             Vin = vin;
         }
@@ -46,9 +39,15 @@ namespace Domaine.Entities
         {
             int i = 11;
             if (Vin.Length < 17)
+            {
                 i = 5;
+            }
+
             if (Vin.Length != 0)
+            {
                 return HashCode.Combine(Vin.Substring(0, i));
+            }
+
             return 0;
         }
     }

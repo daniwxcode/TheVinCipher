@@ -1,13 +1,4 @@
-﻿using Domaine.Abstracts;
-using Domaine.Interfaces;
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Services.Interfaces
+﻿namespace Services.Interfaces
 {
     public interface ICrudServices
     {
@@ -17,5 +8,5 @@ namespace Services.Interfaces
 
     }
 
-     
+
 }

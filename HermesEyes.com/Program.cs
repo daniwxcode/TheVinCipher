@@ -1,5 +1,7 @@
+
 using HermesEyes.com.Model;
 
+using Infrastructure.APIs.Abstracts;
 using Infrastructure.Contexts;
 
 using Microsoft.EntityFrameworkCore;
@@ -14,13 +16,14 @@ ConfigurationManager configuration = builder.Configuration;
 builder.Services.AddDbContext<HermesContext>(option =>
 {
     option.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
-    
+
 });
 
 builder.Services.AddSingleton<TokensProvider>(_ => new TokensProvider(configuration));
 builder.Services.AddScoped<ICrudServices, VinToSearchServices>();
 builder.Services.AddScoped<ICarService, BaseCarServices>();
-
+builder.Services.AddSingleton<BaseApiProvider, VincarioProvider>(_ => new VincarioProvider(configuration));
+builder.Services.AddHttpClient<IHttpConsumtionServices, DecodedCarBaseService>();
 builder.Services.AddControllers();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

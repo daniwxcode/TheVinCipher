@@ -14,11 +14,13 @@ public class MarketValueController : ControllerBase
     private readonly ICarService _service;
     private readonly ICrudServices requestsbase;
     private readonly TokensProvider _tokensprovider;
-    public MarketValueController (ICarService carService, ICrudServices services,TokensProvider tokensProvider)
+    private readonly IHttpConsumtionServices _httpclient;
+    public MarketValueController (ICarService carService, ICrudServices services, TokensProvider tokensProvider, IHttpConsumtionServices http)
     {
         _service = carService;
         requestsbase = services;
         _tokensprovider = tokensProvider;
+        _httpclient = http;
     }
 
     /// <summary>
@@ -33,10 +35,18 @@ public class MarketValueController : ControllerBase
     public async Task<ActionResult<MarketValueResponse>> GetMarketValue (string token, string vin)
     {
         if (token == null || !_tokensprovider.IsValid(token))
+        {
             return BadRequest(new MarketValueResponse("Token Invalid"));
+        }
+
         var car = await _service.FindSameCar(vin);
         if (car == null || car.Vin == null)
         {
+            var t = await _httpclient.FindCar(vin);
+            if (t != null)
+            {
+                Console.WriteLine(t.Model);
+            }
             await requestsbase.Ajouter(vin);
             return NotFound(new MarketValueResponse());
         }

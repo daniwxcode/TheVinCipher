@@ -2,12 +2,6 @@
 
 using HermesEyes.com.Abstracts;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace HermesEyes.com.Model
 {
     public class MarketValueResponse : HermesResponse<Car>

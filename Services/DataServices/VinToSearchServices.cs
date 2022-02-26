@@ -4,12 +4,6 @@ using Infrastructure.Contexts;
 
 using Services.Interfaces;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Services.DataServices
 {
     public class VinToSearchServices : ICrudServices
@@ -30,11 +24,11 @@ namespace Services.DataServices
                 await _repository.AddAsync(item);
                 await _repository.SaveChangesAsync();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 //Ignore
             }
-           
+
 
         }
 
