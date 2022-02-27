@@ -1,10 +1,12 @@
 ﻿using Domaine.Abstracts;
 
+using Microsoft.EntityFrameworkCore;
+
 using System.ComponentModel.DataAnnotations;
 
 namespace Domaine.Entities
 {
-    []
+    [Index(nameof(Vin), IsUnique =true)]
     public class CarBase : BaseEntity
     {
         
