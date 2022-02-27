@@ -1,19 +1,19 @@
 ﻿using Domaine.Entities;
 
-using Infrastructure.APIs.VinCario.Services;
 using Infrastructure.Contexts;
 
-using Services.Abstract;
 using Services.Interfaces;
 
 namespace Services.DataServices
 {
-    public class DecodedCarBaseService : DatabaseService, IHttpConsumtionServices
+    public class DecodedCarBaseService : IHttpConsumtionServices
     {
-        private readonly VincarioApiClient _api;
-        public DecodedCarBaseService (HermesContext hermesContext, VincarioApiClient vincarioApi) : base(hermesContext)
+        private readonly HermesContext _dbContext;
+        // private readonly VincarioApiClient _api;
+        public DecodedCarBaseService (HermesContext hermesContext)//, VincarioApiClient vincarioApi)
         {
-            _api = vincarioApi;
+            _dbContext = hermesContext;
+            // _api = vincarioApi;
         }
 
         public async Task<CarBase> FindCar (string vin)
@@ -24,7 +24,8 @@ namespace Services.DataServices
                 return carbase;
 
             }
-            return await _api.GetResult(vin);
+            return null;
+            //  return await _api.GetResult(vin);
         }
     }
 }

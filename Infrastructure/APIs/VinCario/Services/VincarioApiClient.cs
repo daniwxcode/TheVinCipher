@@ -11,6 +11,8 @@ namespace Infrastructure.APIs.VinCario.Services
 {
     public class VincarioApiClient : BaseApiProviderClient<CarBase>, IVinDecoder<VinCarioResult>
     {
+        protected readonly HttpClient _httpClient;
+        protected readonly BaseApiProvider apiProvider;
 
         public VincarioApiClient (HttpClient httpClient, BaseApiProvider apiProvider) : base(httpClient, apiProvider)
         {

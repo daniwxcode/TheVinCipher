@@ -1,14 +1,14 @@
 ﻿using Domaine.Abstracts;
-using Domaine.Structs;
 
 using System.ComponentModel.DataAnnotations;
 
 namespace Domaine.Entities
 {
+    []
     public class CarBase : BaseEntity
     {
-        [Key]
-        public Vin Vin { get; set; }
+        
+        public string Vin { get; set; }
         public int? Year { get; set; } = 0;
         public string? Make { get; set; }
         public string? Model { get; set; }
