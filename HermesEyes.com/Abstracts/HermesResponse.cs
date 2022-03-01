@@ -9,6 +9,7 @@ namespace HermesEyes.com.Abstracts
         public string Message { get; set; }
         public bool Success { get; set; } = false;
         public T Data { get; set; }
+        public int HermesMarketValue { get; set; }
 
 
     }

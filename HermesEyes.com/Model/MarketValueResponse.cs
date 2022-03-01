@@ -6,9 +6,10 @@ namespace HermesEyes.com.Model
 {
     public class MarketValueResponse : HermesResponse<Car>
     {
-        public MarketValueResponse (Car car)
+        public MarketValueResponse (Car car,int value)
         {
             Success = true;
+            HermesMarketValue = value;
             Data = car;
             Message = "Evaluation effectuée avec succès";
         }
@@ -16,6 +17,7 @@ namespace HermesEyes.com.Model
         {
             Success = false;
             Data = null;
+            HermesMarketValue = 0;
             Message = "Impossible de trouver une côte pour cette voiture nos développeurs vous reviendrons";
         }
         public MarketValueResponse (string message)

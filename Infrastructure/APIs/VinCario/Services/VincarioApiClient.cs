@@ -11,12 +11,13 @@ namespace Infrastructure.APIs.VinCario.Services
 {
     public class VincarioApiClient : BaseApiProviderClient<CarBase>, IVinDecoder<VinCarioResult>
     {
-        protected readonly HttpClient _httpClient;
-        protected readonly BaseApiProvider apiProvider;
+        //protected readonly HttpClient _httpClient;
+        //protected readonly BaseApiProvider apiProvider;
 
         public VincarioApiClient (HttpClient httpClient, BaseApiProvider apiProvider) : base(httpClient, apiProvider)
         {
-
+            //_httpClient = httpClient;
+            //apiProvider= apiProvider;
         }
 
         public bool Succes { get; set; } = false;
@@ -25,22 +26,24 @@ namespace Infrastructure.APIs.VinCario.Services
 
         public async Task<VinCarioResult> IdentifyCarByVINAsync (string vin)
         {
+            VinCarioResult vinCarioResult= null;
             try
             {
                 var url = GetUri(vin);
                 string response = await _httpClient.GetStringAsync(url);
                 if (response != null)
                 {
-                    VinCarioResult _vinDecoderResult = JsonSerializer.Deserialize<VinCarioResult>(response);
-                    return _vinDecoderResult;
+                   vinCarioResult= JsonSerializer.Deserialize<VinCarioResult>(response);
+                    //return _vinDecoderResult;
 
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                Console.WriteLine(e.Message);
 
             }
-            return null;
+            return vinCarioResult;
         }
         private string controlrsum (string vin)
         {
@@ -63,8 +66,9 @@ namespace Infrastructure.APIs.VinCario.Services
             {
                 throw new KeyNotFoundException("Vin decoder : Impossible de décoder ce vin");
             }
+            var result = new VinCarioToCarBaseConverter(response).NewCar;
 
-            return new VinCarioToCarBaseConverter(response).CarBase;
+            return result ;
 
         }
 

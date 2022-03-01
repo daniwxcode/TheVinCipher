@@ -131,15 +131,7 @@ namespace Services.DataServices
             car.ValueDate = DateTime.Now;
             car.MarketValue = (int)(somme / effectif) + new Random().Next(0, ajout);
             car.ID = 0;
-            //try
-            //{
-            //    _Repository.Add(car);
-            //    _Repository.SaveChanges();
-            //}
-            //catch (Exception ex)
-            //{
-            //    Console.WriteLine(ex.Message);
-            //}
+           
             return car;
         }
     }

@@ -1,6 +1,8 @@
 ﻿
 using HermesEyes.com.Model;
 
+using Infrastructure.APIs.Abstracts;
+
 using Microsoft.AspNetCore.Mvc;
 
 using Services.Interfaces;
@@ -15,12 +17,14 @@ public class MarketValueController : ControllerBase
     private readonly ICrudServices requestsbase;
     private readonly TokensProvider _tokensprovider;
     private readonly IHttpConsumtionServices _httpclient;
-    public MarketValueController (ICarService carService, ICrudServices services, TokensProvider tokensProvider, IHttpConsumtionServices http)
+    private readonly BaseApiProvider _BaseApiProvider;
+    public MarketValueController (ICarService carService, ICrudServices services, TokensProvider tokensProvider, IHttpConsumtionServices http, BaseApiProvider baseApiProvider)
     {
         _service = carService;
         requestsbase = services;
         _tokensprovider = tokensProvider;
         _httpclient = http;
+        _BaseApiProvider = baseApiProvider;
     }
 
     /// <summary>
@@ -40,17 +44,16 @@ public class MarketValueController : ControllerBase
         }
 
         var car = await _service.FindSameCar(vin);
-        if (car == null || car.Vin == null)
-        {
-            var t = await _httpclient.FindCar(vin);
-            if (t != null)
+        
+            var carBase = await _httpclient.FindCar(vin);
+            if (carBase == null)
             {
-                Console.WriteLine(t.Model);
+                Console.WriteLine(carBase.Model);
+                await requestsbase.Ajouter(vin);
+                return NotFound(new MarketValueResponse());
             }
-            await requestsbase.Ajouter(vin);
-            return NotFound(new MarketValueResponse());
-        }
-        return Ok(new MarketValueResponse(car));
+            
+        return Ok(new MarketValueResponse(carBase,0));
     }
 }
 

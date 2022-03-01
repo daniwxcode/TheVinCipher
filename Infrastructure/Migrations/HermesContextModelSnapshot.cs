@@ -99,7 +99,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("ID");
 
-                    b.ToTable("Cars");
+                    b.ToTable("Cars", (string)null);
                 });
 
             modelBuilder.Entity("Domaine.Entities.CarBase", b =>
@@ -233,7 +233,7 @@ namespace Infrastructure.Migrations
                     b.HasIndex("Vin")
                         .IsUnique();
 
-                    b.ToTable("CarsBase");
+                    b.ToTable("CarsBase", (string)null);
                 });
 
             modelBuilder.Entity("Domaine.Entities.Requests", b =>
@@ -261,7 +261,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("CarID");
 
-                    b.ToTable("Requests");
+                    b.ToTable("Requests", (string)null);
                 });
 
             modelBuilder.Entity("Domaine.Entities.Requests", b =>

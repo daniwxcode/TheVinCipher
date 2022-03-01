@@ -7,7 +7,7 @@ namespace Infrastructure.Converters
 {
     public abstract class ResponseToCarDecoderBase<T> : IResponseConverter<CarBase>
     {
-        public CarBase CarBase { get; set; } = new CarBase();
+        public CarBase NewCar { get; set; } = new CarBase();
         protected T ResponseToConvert { get; set; }
 
         protected ResponseToCarDecoderBase (T Response)
