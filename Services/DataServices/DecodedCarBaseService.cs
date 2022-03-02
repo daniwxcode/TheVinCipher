@@ -120,7 +120,7 @@ namespace Services.DataServices
                 Doors = car.Doors,
                 Model = car.Model,
                 Make = car.Make,
-                Category = car.Category,
+                Category = car.Category + car.Trim,
                 Transmission = car.Transmission,
                 EngineCylinders = car.EngineCylender.ToString(),
                 EngineSize = car.EnginPower.ToString(),
@@ -128,7 +128,9 @@ namespace Services.DataServices
                 StandardSeating = car.Seats,
                 FuelType = car.Energy,
                 Trim = car.Trim,
-                Style = car.Type
+                Style = car.Type,
+                HermesMarketValue = car.MarketValue.Value
+                
             };
             if(carBase.Year!=0)
             {
