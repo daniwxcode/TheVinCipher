@@ -75,19 +75,19 @@ namespace Services.DataServices
             var Sameknown = _dbContext.Cars.Where(c => c.Vin.Substring(0, 11) == vin.Substring(0, 11) || c.Vin.Substring(3, 6) == vin.Substring(3, 6));
             if (carBase.Year == null || carBase.Year == 0)
             {
-                carBase.Year = Sameknown.FirstOrDefault(c => c.Year != 0 && c.Vin.Substring(9, 1) == vin.Substring(9, 1)).Year;
+                carBase.Year = Sameknown.FirstOrDefault(c => c.Year != 0 && c.Vin.Substring(9, 1) == vin.Substring(9, 1))?.Year;
             }
             if (carBase.FuelType == null || carBase.FuelType == String.Empty)
             {
-                carBase.FuelType = Sameknown.FirstOrDefault(c => c.Energy != null).Energy;
+                carBase.FuelType = Sameknown.FirstOrDefault(c => c.Energy != null)?.Energy;
             }
             if (carBase.EngineSize == null || carBase.EngineSize == string.Empty)
             {
-                carBase.EngineSize = Sameknown.FirstOrDefault(s => s.Energy != null).EnginPower.ToString();
+                carBase.EngineSize = Sameknown.FirstOrDefault(s => s.Energy != null)?.EnginPower.ToString();
             }
             if (carBase.Trim == null)
             {
-                carBase.Trim = Sameknown.FirstOrDefault(s => s.Trim != null).Trim;
+                carBase.Trim = Sameknown.FirstOrDefault(s => s.Trim != null)?.Trim;
             }
             if (carBase.ManufacturerSuggestedRetailPrice == null)
             {
