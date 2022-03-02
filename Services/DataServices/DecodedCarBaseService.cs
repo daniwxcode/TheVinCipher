@@ -42,7 +42,8 @@ namespace Services.DataServices
                     {
                         _dbContext.CarsBases.Update(carbase);
                         _dbContext.SaveChanges();
-                    }catch (Exception ex)
+                    }
+                    catch (Exception ex)
                     {
 
                     }
@@ -64,6 +65,11 @@ namespace Services.DataServices
                     }
                 }
 
+            }
+            else
+            {
+                carbase = await ManageOldVin(vin);
+               
             }
 
             return carbase ?? new CarBase();
@@ -102,13 +108,46 @@ namespace Services.DataServices
             }
             return carBase;
         }
+        private async Task<CarBase> ManageOldVin (string vin)
+        {
+           
+            var car = _dbContext.Cars.Where(c => c.Vin.Length < 17 && c.Vin.Substring(0, 5) == vin.Substring(0, 5) && c.MarketValue != 0).FirstOrDefault();
+            if(car == null)
+                return null;
+           var carBase = new CarBase()
+            {
+                Vin = vin,
+                Doors = car.Doors,
+                Model = car.Model,
+                Make = car.Make,
+                Category = car.Category,
+                Transmission = car.Transmission,
+                EngineCylinders = car.EngineCylender.ToString(),
+                EngineSize = car.EnginPower.ToString(),
+                Size = car.Size,
+                StandardSeating = car.Seats,
+                FuelType = car.Energy,
+                Trim = car.Trim,
+                Style = car.Type
+            };
+            if(carBase.Year!=0)
+            {
+                int age = DateTime.Now.Year - car.Year;
+                int value =(int) (car.MarketValue * 1.1);
+                carBase.HermesMarketValue = await GetActualValue(value, age);
+            }
+
+
+            return carBase;
+        }
         private async Task<int> GetActualValue (int value, int age)
         {
             if (age <= 0)
             {
                 return value;
             }
-            for (int i = 1; i < age; i++)
+            age -= 5;
+            for (int i = 1; i < age||i<30; i++)
             {
                 var taux = 0.0;
                 switch (i)

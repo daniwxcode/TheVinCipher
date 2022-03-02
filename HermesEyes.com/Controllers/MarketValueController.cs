@@ -47,7 +47,7 @@ public class MarketValueController : ControllerBase
 
      
             var carBase = await _httpclient.FindCar(vin);
-            if (carBase == null)
+            if (carBase == null||carBase.Vin==null || carBase.Make ==null)
             {
                 Console.WriteLine(carBase.Model);
                 await requestsbase.Ajouter(vin);

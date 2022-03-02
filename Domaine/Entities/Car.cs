@@ -19,18 +19,18 @@ namespace Domaine.Entities
         public string Make { get; set; }
         public string Model { get; set; }
         public int Year { get; set; }
-        public int EnginPower { get; set; }
-        public string Category { get; set; }
-        public string Transmission { get; set; }
-        public string Energy { get; set; }
-        public double EngineCylender { get; set; }
-        public int Doors { get; set; }
-        public int Seats { get; set; }
-        public string Type { get; set; }
-        public string Trim { get; set; }
-        public string Size { get; set; }
-        public string Description { get; set; }
-        public int MarketValue { get; set; }
+        public int? EnginPower { get; set; }
+        public string? Category { get; set; }
+        public string? Transmission { get; set; }
+        public string? Energy { get; set; }
+        public double? EngineCylender { get; set; }
+        public int? Doors { get; set; }
+        public int? Seats { get; set; }
+        public string? Type { get; set; }
+        public string? Trim { get; set; }
+        public string? Size { get; set; }
+        public string? Description { get; set; }
+        public int? MarketValue { get; set; }
         public DateTime? ValueDate { get; set; }
         public DateTime? MadeDeate { get; set; }
         public override bool Equals (object? obj)

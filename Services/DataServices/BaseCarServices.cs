@@ -88,14 +88,14 @@ namespace Services.DataServices
                     }
                     cartemoin = cars.Where(c=>c.MarketValue == cars.Max(cv=>cv.MarketValue)).FirstOrDefault();
                     var nb = cars.Count;
-                    var val = cars.Average(c => c.MarketValue) * (1 - taux);
+                    var val = cars.Average(c => c.MarketValue).Value * (1 - taux);
                     distribution.Add((nb, val));
                 }
             }
 
             var proche = _Repository.Cars.Where(c => c.Vin.Substring(0, limit) == carVin.Substring(0, limit)).OrderBy(t => t.ValueDate).LastOrDefault().MarketValue;
 
-            var diff = Math.Abs(proche - cartemoin.MarketValue);
+            var diff = Math.Abs(proche.Value - cartemoin.MarketValue.Value);
             var somme = distribution.Sum(i => (i.ValeurMoyenne * i.Effectif));
             var effectif = distribution.Sum(c => c.Effectif);
             var groupe = distribution.Count();
@@ -122,7 +122,7 @@ namespace Services.DataServices
                 {
                     Random rnd = new Random();
                     int taux = rnd.Next(1, 13);
-                    ajout = car.MarketValue * (taux / 100);
+                    ajout = car.MarketValue.Value * (taux / 100);
                 }
             }
 
@@ -132,7 +132,7 @@ namespace Services.DataServices
             car.MarketValue = (int)(somme / effectif) + new Random().Next(0, ajout);
           
 
-            return car.MarketValue;
+            return car.MarketValue??0;
           //  return new Car();
         }
     }
