@@ -4,7 +4,7 @@ namespace Services.Interfaces
 {
     public interface ICarService
     {
-        public Task<Car> FindSameCar (string carVin);
+        public Task<int> FindSameCarValue (string carVin);
 
     }
 }

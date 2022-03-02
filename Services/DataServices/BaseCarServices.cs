@@ -13,7 +13,7 @@ namespace Services.DataServices
         {
             _Repository = hermesContext;
         }
-        public async Task<Car> FindSameCar (string carVin)
+        public async Task<int> FindSameCarValue (string carVin)
         {
 
             List<(int Effectif, double ValeurMoyenne)> distribution = new List<(int, double)>();
@@ -38,10 +38,10 @@ namespace Services.DataServices
             car = _Repository.Cars.Where(c => c.Vin.Substring(0, limit) == carVin.Substring(0, limit)).FirstOrDefault();
             if (car == null)
             {
-                return null;
+                return 0;
             }
             car = null;
-            var cartemoin = new Car();
+            Car cartemoin = new Car();
             for (int i = taille; i >= limit; i--)
             {
                 var taux = 0.0;
@@ -86,7 +86,7 @@ namespace Services.DataServices
                     {
                         car = cars.First();
                     }
-                    cartemoin = cars.Last();
+                    cartemoin = cars.Where(c=>c.MarketValue == cars.Max(cv=>cv.MarketValue)).FirstOrDefault();
                     var nb = cars.Count;
                     var val = cars.Average(c => c.MarketValue) * (1 - taux);
                     distribution.Add((nb, val));
@@ -130,9 +130,10 @@ namespace Services.DataServices
             car.Vin = carVin;
             car.ValueDate = DateTime.Now;
             car.MarketValue = (int)(somme / effectif) + new Random().Next(0, ajout);
-            car.ID = 0;
-           
-            return car;
+          
+
+            return car.MarketValue;
+          //  return new Car();
         }
     }
 }

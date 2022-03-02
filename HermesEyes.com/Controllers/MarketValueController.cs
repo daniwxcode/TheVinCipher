@@ -1,4 +1,6 @@
 ﻿
+using Domaine.Entities;
+
 using HermesEyes.com.Model;
 
 using Infrastructure.APIs.Abstracts;
@@ -43,17 +45,15 @@ public class MarketValueController : ControllerBase
             return BadRequest(new MarketValueResponse("Token Invalid"));
         }
 
-        var car = await _service.FindSameCar(vin);
-        
+     
             var carBase = await _httpclient.FindCar(vin);
             if (carBase == null)
             {
                 Console.WriteLine(carBase.Model);
                 await requestsbase.Ajouter(vin);
                 return NotFound(new MarketValueResponse());
-            }
-            
-        return Ok(new MarketValueResponse(carBase,0));
+            }           
+        return Ok(new MarketValueResponse(new CarDecode(carBase)));
     }
 }
 

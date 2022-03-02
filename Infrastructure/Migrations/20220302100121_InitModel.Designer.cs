@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(HermesContext))]
-    [Migration("20220227095140_CarBase")]
-    partial class CarBase
+    [Migration("20220302100121_InitModel")]
+    partial class InitModel
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -26,12 +26,6 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domaine.Entities.Car", b =>
                 {
-                    b.Property<long>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ID"), 1L, 1);
-
                     b.Property<string>("Category")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -99,18 +93,13 @@ namespace Infrastructure.Migrations
                     b.Property<int>("Year")
                         .HasColumnType("int");
 
-                    b.HasKey("ID");
-
                     b.ToTable("Cars");
                 });
 
             modelBuilder.Entity("Domaine.Entities.CarBase", b =>
                 {
-                    b.Property<long>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ID"), 1L, 1);
+                    b.Property<string>("Vin")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("AntiBrakeSystem")
                         .HasColumnType("nvarchar(max)");
@@ -125,6 +114,10 @@ namespace Infrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CurbWeight")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Devise")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("Doors")
@@ -142,9 +135,6 @@ namespace Infrastructure.Migrations
                     b.Property<string>("EngineSize")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime?>("EvaluationDate")
-                        .HasColumnType("datetime2");
-
                     b.Property<string>("FuelCapacity")
                         .HasColumnType("nvarchar(max)");
 
@@ -153,6 +143,9 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("GrossVehicleWeightRating")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("HermesMarketValue")
+                        .HasColumnType("int");
 
                     b.Property<string>("HighwayMileage")
                         .HasColumnType("nvarchar(max)");
@@ -217,10 +210,6 @@ namespace Infrastructure.Migrations
                     b.Property<string>("Type")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Vin")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.Property<int?>("WeightEmptykg")
                         .HasColumnType("int");
 
@@ -230,24 +219,15 @@ namespace Infrastructure.Migrations
                     b.Property<int?>("Year")
                         .HasColumnType("int");
 
-                    b.HasKey("ID");
+                    b.HasKey("Vin");
 
-                    b.HasIndex("Vin")
-                        .IsUnique();
-
-                    b.ToTable("CarsBase");
+                    b.ToTable("CarsBases");
                 });
 
             modelBuilder.Entity("Domaine.Entities.Requests", b =>
                 {
-                    b.Property<long>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ID"), 1L, 1);
-
-                    b.Property<long?>("CarID")
-                        .HasColumnType("bigint");
+                    b.Property<string>("Vin")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("datetime2");
@@ -255,24 +235,9 @@ namespace Infrastructure.Migrations
                     b.Property<bool>("IsManaged")
                         .HasColumnType("bit");
 
-                    b.Property<string>("Vin")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("ID");
-
-                    b.HasIndex("CarID");
+                    b.HasKey("Vin");
 
                     b.ToTable("Requests");
-                });
-
-            modelBuilder.Entity("Domaine.Entities.Requests", b =>
-                {
-                    b.HasOne("Domaine.Entities.Car", "Car")
-                        .WithMany()
-                        .HasForeignKey("CarID");
-
-                    b.Navigation("Car");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,15 +1,11 @@
 ﻿using Domaine.Abstracts;
 
-using Microsoft.EntityFrameworkCore;
-
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domaine.Entities
 {
-    public class CarBase : BaseEntity
+    public class CarDecode : BaseEntity
     {
-        [Key]
         public string Vin { get; set; }
         public int? Year { get; set; } = 0;
         public string? Make { get; set; }
@@ -47,8 +43,52 @@ namespace Domaine.Entities
         public int? StandardSeating { get; set; }
         public int HermesMarketValue { get; set; } = 0;
         public string Devise { get; set; } = "XOF";
-        public string? ManufacturerSuggestedRetailPrice { get; set; }
-        public DateTime? MadeDeate { get; set; }
 
+        public CarDecode (CarBase carBase)
+        {
+            Vin = carBase.Vin;
+            Year = carBase.Year;
+            Make = carBase.Make;
+            MadeIn = carBase.MadeIn;
+            Model = carBase.Model;
+            Devise = carBase.Devise;
+            HermesMarketValue = carBase.HermesMarketValue;
+            StandardSeating = carBase.StandardSeating;
+            WheelbaseLength = carBase.WheelbaseLength;
+            OverallHeight = carBase.OverallHeight;
+            OverallLength = carBase.OverallLength;
+            Trim = carBase.Trim;
+            Series = carBase.Series;
+            Style = carBase.Style;
+            Type = carBase.Type;
+            Size = carBase.Size;
+            Category = carBase.Category;
+            MadeInCity = carBase.MadeInCity;
+            Doors = carBase.Doors;
+            FuelCapacity = carBase.FuelCapacity;
+            FuelType = carBase.FuelType;
+            SequentialNumber = carBase.SequentialNumber;
+            CityMileage = carBase.CityMileage;
+            HighwayMileage = carBase.HighwayMileage;
+            Engine = carBase.Engine;
+            EngineSize = carBase.EngineSize;
+            EngineCylinders = carBase.EngineCylinders;
+            Transmission = carBase.Transmission;
+            TransmissionType = carBase.TransmissionType;
+            TransmissionSpeeds = carBase.TransmissionSpeeds;
+            Drivetrain = carBase.Drivetrain;
+            AntiBrakeSystem = carBase.AntiBrakeSystem;
+            SteeringType = carBase.SteeringType;
+            CurbWeight = carBase.CurbWeight;
+            WeightEmptykg = carBase.WeightEmptykg;
+            GrossVehicleWeightRating = carBase.GrossVehicleWeightRating;
+            OverallWidth = carBase.OverallWidth;
+
+
+
+
+
+
+        }
     }
 }

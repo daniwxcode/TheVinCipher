@@ -5,16 +5,42 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Infrastructure.Migrations
 {
-    public partial class CarBase : Migration
+    public partial class InitModel : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "CarsBase",
+                name: "Cars",
                 columns: table => new
                 {
-                    ID = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Vin = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Make = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Model = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Year = table.Column<int>(type: "int", nullable: false),
+                    EnginPower = table.Column<int>(type: "int", nullable: false),
+                    Category = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Transmission = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Energy = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    EngineCylender = table.Column<double>(type: "float", nullable: false),
+                    Doors = table.Column<int>(type: "int", nullable: false),
+                    Seats = table.Column<int>(type: "int", nullable: false),
+                    Type = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Trim = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Size = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    MarketValue = table.Column<int>(type: "int", nullable: false),
+                    ValueDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    MadeDeate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CarsBases",
+                columns: table => new
+                {
                     Vin = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Year = table.Column<int>(type: "int", nullable: true),
                     Make = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -50,27 +76,41 @@ namespace Infrastructure.Migrations
                     OverallWidth = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     WheelbaseLength = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     StandardSeating = table.Column<int>(type: "int", nullable: true),
+                    HermesMarketValue = table.Column<int>(type: "int", nullable: false),
+                    Devise = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     ManufacturerSuggestedRetailPrice = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    EvaluationDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     MadeDeate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_CarsBase", x => x.ID);
+                    table.PrimaryKey("PK_CarsBases", x => x.Vin);
                 });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_CarsBase_Vin",
-                table: "CarsBase",
-                column: "Vin",
-                unique: true);
+            migrationBuilder.CreateTable(
+                name: "Requests",
+                columns: table => new
+                {
+                    Vin = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    IsManaged = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedOn = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Requests", x => x.Vin);
+                });
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "CarsBase");
+                name: "Cars");
+
+            migrationBuilder.DropTable(
+                name: "CarsBases");
+
+            migrationBuilder.DropTable(
+                name: "Requests");
         }
     }
 }

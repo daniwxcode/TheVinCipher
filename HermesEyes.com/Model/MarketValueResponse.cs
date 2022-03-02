@@ -4,12 +4,11 @@ using HermesEyes.com.Abstracts;
 
 namespace HermesEyes.com.Model
 {
-    public class MarketValueResponse : HermesResponse<Car>
+    public class MarketValueResponse : HermesResponse<CarDecode>
     {
-        public MarketValueResponse (Car car,int value)
+        public MarketValueResponse (CarDecode car)
         {
-            Success = true;
-            HermesMarketValue = value;
+            Success = true;            
             Data = car;
             Message = "Evaluation effectuée avec succès";
         }
@@ -17,7 +16,6 @@ namespace HermesEyes.com.Model
         {
             Success = false;
             Data = null;
-            HermesMarketValue = 0;
             Message = "Impossible de trouver une côte pour cette voiture nos développeurs vous reviendrons";
         }
         public MarketValueResponse (string message)
