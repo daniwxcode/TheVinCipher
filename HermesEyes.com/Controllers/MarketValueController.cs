@@ -42,7 +42,7 @@ public class MarketValueController : ControllerBase
     {
         if (token == null || !_tokensprovider.IsValid(token))
         {
-            return BadRequest(new MarketValueResponse("Token Invalid"));
+            return Unauthorized(new MarketValueResponse("Token Invalid"));
         }
 
      
