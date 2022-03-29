@@ -43,9 +43,7 @@ public class MarketValueController : ControllerBase
         if (token == null || !_tokensprovider.IsValid(token))
         {
             return Unauthorized(new MarketValueResponse("Token Invalid"));
-        }
-
-     
+        }     
             var carBase = await _httpclient.FindCar(vin);
             if (carBase == null||carBase.Vin==null || carBase.Make ==null)
             {

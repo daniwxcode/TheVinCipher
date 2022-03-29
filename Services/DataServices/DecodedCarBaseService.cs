@@ -33,10 +33,21 @@ namespace Services.DataServices
             if (vin.Length == 17)
             {
 
-                carbase = _dbContext.CarsBases.FirstOrDefault(c => c.Vin.Substring(0, 11) == vin.Substring(0, 11) || c.Vin.Substring(3, 6) == vin.Substring(3, 6));
+               var carbases = _dbContext.CarsBases.Where(c => c.Vin.Substring(0, 11) == vin.Substring(0, 11) || c.Vin.Substring(3, 6) == vin.Substring(3, 6));
+                if (carbases.Any(c => c.HermesMarketValue != 0))
+                {
+                    carbase = carbases.FirstOrDefault(c=>c.HermesMarketValue>0);
+                }
                 if (carbase != null)
                 {
                     carbase.Vin = vin;
+                    if (carbase.HermesMarketValue != 0)
+                    {
+                       if(carbase.CreatedOn.Year <= DateTime.Today.Year+1)
+                        {
+                            return carbase;
+                        }
+                    }
                     carbase = await OptimizeCarInfo(carbase);
                     try
                     {
@@ -78,7 +89,7 @@ namespace Services.DataServices
         private async Task<CarBase> OptimizeCarInfo (CarBase carBase)
         {
             var vin = carBase.Vin;
-            var Sameknown = _dbContext.Cars.Where(c => c.Vin.Substring(0, 11) == vin.Substring(0, 11) || c.Vin.Substring(3, 6) == vin.Substring(3, 6));
+            var Sameknown = _dbContext.Cars.Where(c =>c.MarketValue!=0 &&( c.Vin.Substring(0, 11) == vin.Substring(0, 11) || c.Vin.Substring(3, 6) == vin.Substring(3, 6)));
             if (carBase.Year == null || carBase.Year == 0)
             {
                 carBase.Year = Sameknown.FirstOrDefault(c => c.Year != 0 && c.Vin.Substring(9, 1) == vin.Substring(9, 1))?.Year;
@@ -95,17 +106,19 @@ namespace Services.DataServices
             {
                 carBase.Trim = Sameknown.FirstOrDefault(s => s.Trim != null)?.Trim;
             }
+            int age = DateTime.Now.Year - carBase.Year.Value;
             if (carBase.ManufacturerSuggestedRetailPrice == null)
             {
                 carBase.HermesMarketValue = await _carService.FindSameCarValue(carBase.Vin);
             }
             else
             {
-                int age = DateTime.Now.Year - carBase.Year.Value;
-                int value = int.Parse(carBase.ManufacturerSuggestedRetailPrice, NumberStyles.Currency, CultureInfo.CreateSpecificCulture("us-US").NumberFormat);
 
-                carBase.HermesMarketValue = await GetActualValue(value, age);
+                carBase.HermesMarketValue  = int.Parse(carBase.ManufacturerSuggestedRetailPrice, NumberStyles.Currency, CultureInfo.CreateSpecificCulture("us-US").NumberFormat);
+
+                
             }
+            carBase.HermesMarketValue = await GetActualValue(carBase.HermesMarketValue, age);
             return carBase;
         }
         private async Task<CarBase> ManageOldVin (string vin)

@@ -8,9 +8,9 @@ namespace HermesEyes.com.Model
     {
         public MarketValueResponse (CarDecode car)
         {
-            Success = true;            
+            Success = car.HermesMarketValue!=0;            
             Data = car;
-            Message = "Evaluation effectuée avec succès";
+            Message = car.HermesMarketValue!=0?"Evaluation effectuée avec succès": "Impossible de trouver une côte pour cette voiture nos développeurs vous reviendrons";
         }
         public MarketValueResponse ()
         {
