@@ -22,10 +22,13 @@ builder.Services.AddDbContext<HermesContext>(option =>
 
 });
 builder.Services.AddSingleton<BaseApiProvider, VincarioProvider>(_ => new VincarioProvider(configuration));
+builder.Services.AddSingleton<BaseApiProvider, VinAuditProvider>(_ => new VinAuditProvider(configuration));
 builder.Services.AddSingleton<TokensProvider>(_ => new TokensProvider(configuration));
 builder.Services.AddScoped<ICrudServices, VinToSearchServices>();
 builder.Services.AddScoped<ICarService, BaseCarServices>();
 builder.Services.AddHttpClient<BaseApiProviderClient<CarBase>, VincarioApiClient>();
+builder.Services.AddHttpClient<BaseApiProviderClient<CarBase>, VinAuditApiClient>();
+
 builder.Services.AddHttpClient<IHttpConsumtionServices, DecodedCarBaseService>();
 builder.Services.AddControllers();
 

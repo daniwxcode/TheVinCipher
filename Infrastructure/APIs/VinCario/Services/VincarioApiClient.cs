@@ -11,18 +11,13 @@ namespace Infrastructure.APIs.VinCario.Services
 {
     public class VincarioApiClient : BaseApiProviderClient<CarBase>, IVinDecoder<VinCarioResult>
     {
-        //protected readonly HttpClient _httpClient;
-        //protected readonly BaseApiProvider apiProvider;
-
+        
         public VincarioApiClient (HttpClient httpClient, BaseApiProvider apiProvider) : base(httpClient, apiProvider)
         {
-            //_httpClient = httpClient;
-            //apiProvider= apiProvider;
+           
         }
 
         public bool Succes { get; set; } = false;
-
-
 
         public async Task<VinCarioResult> IdentifyCarByVINAsync (string vin)
         {
