@@ -4,7 +4,9 @@ using Domaine.Entities;
 using HermesEyes.com.Model;
 
 using Infrastructure.APIs.Abstracts;
+using Infrastructure.APIs.Interfaces;
 using Infrastructure.APIs.VinCario.Services;
+using Infrastructure.APIs.VinRush.Models;
 using Infrastructure.Contexts;
 
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +25,8 @@ builder.Services.AddDbContext<HermesContext>(option =>
 });
 builder.Services.AddSingleton<BaseApiProvider, VincarioProvider>(_ => new VincarioProvider(configuration));
 builder.Services.AddSingleton<BaseApiProvider, VinAuditProvider>(_ => new VinAuditProvider(configuration));
+builder.Services.AddScoped<VinRushScrapper>();
+builder.Services.AddSingleton<IScrappableSource, VinRusUrlGenerator>();
 builder.Services.AddSingleton<TokensProvider>(_ => new TokensProvider(configuration));
 builder.Services.AddScoped<ICrudServices, VinToSearchServices>();
 builder.Services.AddScoped<ICarService, BaseCarServices>();

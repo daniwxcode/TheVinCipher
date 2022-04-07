@@ -3,6 +3,7 @@
 using Infrastructure.APIs.Abstracts;
 using Infrastructure.APIs.Interfaces;
 using Infrastructure.APIs.VinAudit.Models;
+using Infrastructure.APIs.VinAudit.Services;
 
 using System;
 using System.Collections.Generic;
@@ -46,7 +47,7 @@ namespace Infrastructure.APIs.VinCario.Services
             {
                 throw new KeyNotFoundException("Vin decoder : Impossible de décoder ce vin");
             }
-            var result = new VinCarioToCarBaseConverter(response).NewCar;
+            var result = new VinAuditToCarBaseConverter(response).NewCar;
 
             return result;
 
