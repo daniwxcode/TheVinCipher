@@ -16,6 +16,8 @@ namespace HermesEyes.com.Controllers
         public VinDecoderController(TokensProvider tokensProvider, VinRushScrapper vinRushScrapper)
         {
             this.vinRushScrapper = vinRushScrapper;
+            _tokensprovider = tokensProvider;   
+
         }
         [HttpGet()]
         [HttpPost]

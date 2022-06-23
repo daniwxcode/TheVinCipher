@@ -1,5 +1,7 @@
 ﻿using HtmlAgilityPack;
 
+using Humanizer;
+
 using Infrastructure.APIs.Interfaces;
 
 using System.Net;
@@ -51,7 +53,7 @@ namespace Services.DataServices
                         tmp[1]= row.SelectNodes("//td//img").FirstOrDefault().GetAttributeValue("src","");
 
                     }
-                    result.Add(tmp[0],tmp[1]);
+                    result.Add(tmp[0].Underscore(), tmp[1]);
                 }
 
             }
