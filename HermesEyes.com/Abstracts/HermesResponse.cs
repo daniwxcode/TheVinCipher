@@ -3,7 +3,7 @@
 
 namespace HermesEyes.com.Abstracts
 {
-    public abstract class HermesResponse<T> where T : BaseEntity
+    public abstract class HermesResponse<T> where T : new()
     {
         public DateTime ResponseDate { get; init; } = DateTime.Now;
         public string Message { get; set; }

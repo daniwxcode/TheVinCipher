@@ -3,6 +3,10 @@
 using Humanizer;
 
 using Infrastructure.APIs.Interfaces;
+using Infrastructure.Contexts;
+
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 using System.Net;
 using System.Text.RegularExpressions;
@@ -13,10 +17,12 @@ namespace Services.DataServices
     {
 
         private readonly IScrappableSource source;
+        private readonly HermesContext _dbContext;
         public string Vin { get; set; }
-        public VinRushScrapper (IScrappableSource scrappableSource)
+        public VinRushScrapper (IScrappableSource scrappableSource, HermesContext context)
         {
             this.source = scrappableSource;
+            this._dbContext = context;
         }
 
         public bool Succes { get; set; }
@@ -57,6 +63,25 @@ namespace Services.DataServices
                 }
 
             }
+            //if(result.Count > 20)
+            //return Task.FromResult(result);
+            //else
+            //{
+            //    return Task
+            //}
+            //if (Vin.Length >= 11)
+            //{
+            //    var car = _dbContext.Cars.FirstOrDefault(c => c.Vin.Substring(0, 11) == vin.Substring(0, 11));
+            //    var json = JsonConvert.SerializeObject(car);
+            //    var dictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+            //    foreach (var pair in dictionary)
+            //    {
+            //        if (pair.Key == "Description")
+            //            break;
+            //       result.Add(pair.Key, pair.Value);
+            //    }
+            //    return Task.FromResult(dictionary);
+            //}
             return Task.FromResult(result);
         }
 

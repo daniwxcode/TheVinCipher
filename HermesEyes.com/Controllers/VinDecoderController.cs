@@ -28,7 +28,9 @@ namespace HermesEyes.com.Controllers
                 return Unauthorized(new MarketValueResponse("Token Invalid"));
             }
             vinRushScrapper.Vin = vin;
-            return Ok (vinRushScrapper.IdentifyCarByVINAsync(vin));
+            var result = vinRushScrapper.IdentifyCarByVINAsync(vin);
+           
+;           return Ok (result);
         }
     }
 }

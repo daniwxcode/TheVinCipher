@@ -33,17 +33,18 @@ namespace Infrastructure.APIs.VinCario.Services
                 {
                     vinAuditResponse = JsonSerializer.Deserialize<VinAuditResponse>(response);
                 }
+                return vinAuditResponse;
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
             }
-            return vinAuditResponse;
+            return null;
         }
         public override async Task<CarBase> GetResult (string vin)
         {
             var response = await IdentifyCarByVINAsync(vin);
-            if (!response.Success)
+            if (response==null|| !response.Success)
             {
                 throw new KeyNotFoundException("Vin decoder : Impossible de décoder ce vin");
             }

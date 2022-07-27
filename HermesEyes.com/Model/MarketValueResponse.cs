@@ -4,13 +4,16 @@ using HermesEyes.com.Abstracts;
 
 namespace HermesEyes.com.Model
 {
-    public class MarketValueResponse : HermesResponse<CarDecode>
-    {
-        public MarketValueResponse (CarDecode car)
+    public class MarketValueResponse {
+        public  bool Success { get; }
+        public MarketValue Data { get; init; } = new MarketValue(0);
+        public string Message { get; init; }
+
+        public MarketValueResponse (MarketValue car)
         {
-            Success = car.HermesMarketValue!=0;            
+            Success = car.Value!=0;            
             Data = car;
-            Message = car.HermesMarketValue!=0?"Evaluation effectuée avec succès": "Impossible de trouver une côte pour cette voiture nos développeurs vous reviendrons";
+            Message = car.Value!=0?"Evaluation effectuée avec succès": "Impossible de trouver une côte pour cette voiture nos développeurs vous reviendrons";
         }
         public MarketValueResponse ()
         {

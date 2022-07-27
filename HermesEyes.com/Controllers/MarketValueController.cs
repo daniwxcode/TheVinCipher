@@ -1,32 +1,24 @@
-﻿
-using Domaine.Entities;
+﻿using HermesEyes.com.Model;
 
-using HermesEyes.com.Model;
-
-using Infrastructure.APIs.Abstracts;
-
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 using Services.Interfaces;
 
 namespace HermesEyes.com.Controllers;
 
-[Route("api/[controller]/[Action]/{token}/")]
+[Route("api/[controller]")]
 [ApiController]
 public class MarketValueController : ControllerBase
 {
-    private readonly ICarService _service;
-    private readonly ICrudServices requestsbase;
+    private readonly ICarService _carService;
+    private readonly ICrudServices _requestsbase;
     private readonly TokensProvider _tokensprovider;
-    private readonly IHttpConsumtionServices _httpclient;
-    private readonly BaseApiProvider _BaseApiProvider;
-    public MarketValueController (ICarService carService, ICrudServices services, TokensProvider tokensProvider, IHttpConsumtionServices http, BaseApiProvider baseApiProvider)
+    public MarketValueController (ICarService carService, ICrudServices crudServices, TokensProvider tokensProvider)
     {
-        _service = carService;
-        requestsbase = services;
+        _carService = carService;
+        _requestsbase = crudServices;
         _tokensprovider = tokensProvider;
-        _httpclient = http;
-        _BaseApiProvider = baseApiProvider;
     }
 
     /// <summary>
@@ -35,7 +27,6 @@ public class MarketValueController : ControllerBase
     /// <param name="token"></param>
     /// <param name="vin"></param>
     /// <returns></returns>
-
     [HttpGet()]
     [HttpPost]
     public async Task<ActionResult<MarketValueResponse>> GetMarketValue (string token, string vin)
@@ -43,15 +34,16 @@ public class MarketValueController : ControllerBase
         if (token == null || !_tokensprovider.IsValid(token))
         {
             return Unauthorized(new MarketValueResponse("Token Invalid"));
-        }     
-            var carBase = await _httpclient.FindCar(vin);
-            if (carBase == null||carBase.Vin==null || carBase.Make ==null)
-            {
-                Console.WriteLine(carBase.Model);
-                await requestsbase.Ajouter(vin);
-                return NotFound(new MarketValueResponse());
-            }           
-        return Ok(new MarketValueResponse(new CarDecode(carBase)));
+        }
+        int valeur= await _carService.FindSameCarValue(vin);
+        if (valeur<500000)
+        {
+            //Console.WriteLine(carBase.Model);
+            await _requestsbase.Ajouter(vin);
+            return NotFound(new MarketValueResponse());
+        }
+        MarketValue response = new MarketValue(valeur);
+        return Ok(new MarketValueResponse(response));
     }
 }
 

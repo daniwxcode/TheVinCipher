@@ -35,7 +35,7 @@ namespace Services.DataServices
                         break;
                     }
             }
-            car = _Repository.Cars.Where(c => c.Vin.Substring(0, limit) == carVin.Substring(0, limit)).FirstOrDefault();
+            car = _Repository.Cars.Where(c => c.Vin.Substring(0, limit) == carVin.Substring(0, limit)).OrderByDescending(m=>m.MarketValue).FirstOrDefault();
             if (car == null)
             {
                 return 0;
