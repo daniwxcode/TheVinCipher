@@ -27,7 +27,7 @@ namespace Services.DataServices
 
         public bool Succes { get; set; }
 
-        public Task<Dictionary<string, string>> IdentifyCarByVINAsync (string vin)
+        public async Task<Dictionary<string, string>> IdentifyCarByVINAsync (string vin)
         {
             var response = new Dictionary<string, object>();
             WebClient webClient = new WebClient();
@@ -95,9 +95,9 @@ namespace Services.DataServices
                var t3= result.TryAdd("made_in_city",carbase?.MadeInCity??"");
                var t4= result.TryAdd("overall_width", carbase?.OverallWidth??"");
                var t5= result.TryAdd("highway_mileage", carbase?.HighwayMileage??"");
-            result["status"]= (!(t1&& t2 && t3 && t4 && t4 && carbase==null)).ToString();
+            result["status"]= (!(t1&& t2 && t3 && t4 && t4 && carbase==null && result.Count<25)).ToString();
 
-
+          
             //if(result.Count > 20)
             //return Task.FromResult(result);
             //else
@@ -117,7 +117,7 @@ namespace Services.DataServices
             //    }
             //    return Task.FromResult(dictionary);
             //}
-            return Task.FromResult(result);
+            return result;
         }
 
         public string GetUri (string vin)
