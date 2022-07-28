@@ -30,55 +30,23 @@ namespace Services.DataServices
         public async Task<CarBase> FindCar (string vin)
         {
             CarBase carbase = null;
-
-            if (vin.Length == 17)
-            {
-                var mycar = _dbContext.Cars.Where(c => c.Vin.Substring(0, 11) == vin.Substring(0, 11)).ToList().Max(t=>t.MarketValue);
-                //Car bases valides
-                var carbases = _dbContext.CarsBases.Where(c => c.Vin.Substring(0, 11) == vin.Substring(0, 11) || c.Vin.Substring(3, 6) == vin.Substring(3, 6)).ToList();
-                carbase = carbases.FirstOrDefault(c => c.HermesMarketValue > 800000);
-
-                // Si Absent
-                if (carbase != null)
-                {
-                    carbase.Vin = vin;
-                    if (carbase.HermesMarketValue != 0)
-                    {
-                        if (carbase.CreatedOn.Year <= DateTime.Today.Year + 1)
-                        {
-                            return carbase;
-                        }
-                    }
-                }
-
-                else
-                {
-                    carbase = await ManageOurVin(vin);
-                    
-                    //try
-                    //{
-                    //    // Recherche en Ligne
-                    //    carbase = await _api.GetResult(vin);
-                    //}catch (Exception ex)
-                    //{
-                    //    // Sinon Hermes
-
-                    //}
-
-                }
-            }
-            else
-            {
-                // Hermes
-                carbase = await ManageOldVin(vin);
-            }
-            carbase = await OptimizeCarInfo(carbase);
             try
             {
-                if (!_dbContext.CarsBases.Any(c => c.Vin == carbase.Vin))
+                // Recherche en Ligne
+                carbase = await _api.GetResult(vin);
+                await OptimizeCarInfo(carbase);
+            }
+            catch (Exception ex)
+            {
+                // Sinon Hermes
+
+            }
+            try
+            {
+                if (carbase!=null && !_dbContext.CarsBases.Any(c => c.Vin == carbase.Vin))
                 {
-                    _dbContext.CarsBases.AddAsync(carbase);
-                    _dbContext.SaveChanges();
+                    await _dbContext.CarsBases.AddAsync(carbase);
+                    await _dbContext.SaveChangesAsync();
                 }
 
             }
@@ -92,39 +60,38 @@ namespace Services.DataServices
 
         private async Task<CarBase> OptimizeCarInfo (CarBase carBase)
         {
-            var vin = carBase.Vin;
-            var Sameknown = _dbContext.Cars.Where(c => c.MarketValue != 0 && (c.Vin.Substring(0, 11) == vin.Substring(0, 11) || c.Vin.Substring(3, 6) == vin.Substring(3, 6)));
-            if (carBase.Year == null || carBase.Year == 0)
-            {
-                carBase.Year = Sameknown.FirstOrDefault(c => c.Year != 0 && c.Vin.Substring(9, 1) == vin.Substring(9, 1))?.Year;
-            }
-            if (carBase.FuelType == null || carBase.FuelType == String.Empty)
-            {
-                carBase.FuelType = Sameknown.FirstOrDefault(c => c.Energy != null)?.Energy;
-            }
-            if (carBase.EngineSize == null || carBase.EngineSize == string.Empty)
-            {
-                carBase.EngineSize = Sameknown.FirstOrDefault(s => s.Energy != null)?.EnginPower.ToString();
-            }
-            if (carBase.Trim == null)
-            {
-                carBase.Trim = Sameknown.FirstOrDefault(s => s.Trim != null)?.Trim;
-            }
+            //var vin = carBase.Vin;
+            //var Sameknown = _dbContext.Cars.Where(c => c.MarketValue != 0 && (c.Vin.Substring(0, 11) == vin.Substring(0, 11) || c.Vin.Substring(3, 6) == vin.Substring(3, 6)));
+            //if (carBase.Year == null || carBase.Year == 0)
+            //{
+            //    carBase.Year = Sameknown.FirstOrDefault(c => c.Year != 0 && c.Vin.Substring(9, 1) == vin.Substring(9, 1))?.Year;
+            //}
+            //if (carBase.FuelType == null || carBase.FuelType == String.Empty)
+            //{
+            //    carBase.FuelType = Sameknown.FirstOrDefault(c => c.Energy != null)?.Energy;
+            //}
+            //if (carBase.EngineSize == null || carBase.EngineSize == string.Empty)
+            //{
+            //    carBase.EngineSize = Sameknown.FirstOrDefault(s => s.Energy != null)?.EnginPower.ToString();
+            //}
+            //if (carBase.Trim == null)
+            //{
+            //    carBase.Trim = Sameknown.FirstOrDefault(s => s.Trim != null)?.Trim;
+            //}
             int age = DateTime.Now.Year - carBase.Year.Value;
             if (carBase.ManufacturerSuggestedRetailPrice == null)
             {
-                carBase.HermesMarketValue = await _carService.FindSameCarValue(carBase.Vin);
+                carBase.HermesMarketValue = _dbContext.CarsBases.Where(c=>c.Vin.Substring(0,11)== carBase.Vin.Substring(0,11)).Max(m=>m.HermesMarketValue);
             }
             else
             {
 
-                carBase.HermesMarketValue = int.Parse(carBase.ManufacturerSuggestedRetailPrice, NumberStyles.Currency, CultureInfo.CreateSpecificCulture("us-US").NumberFormat);
-
-
+                carBase.HermesMarketValue = int.Parse(carBase.ManufacturerSuggestedRetailPrice, NumberStyles.Currency, CultureInfo.CreateSpecificCulture("us-US").NumberFormat)*600;
             }
             carBase.HermesMarketValue = await GetActualValue(carBase.HermesMarketValue, age);
             return carBase;
         }
+        #region ignore
         private async Task<CarBase> ManageOldVin (string vin)
         {
 
@@ -193,11 +160,20 @@ namespace Services.DataServices
 
             return carBase;
         }
+        #endregion
         private async Task<int> GetActualValue (int value, int age)
         {
-            if (age <= 0)
+            if (age <= 3)
             {
-                return value;
+                return value<10_000_000? _dbContext.CarsBases.FirstOrDefault(c=>c.HermesMarketValue>10_000_000).HermesMarketValue:value;
+            }
+            if(age <= 10)
+            {
+                return value < 5_000_000 ? _dbContext.CarsBases.FirstOrDefault(c => c.HermesMarketValue > 5_000_000).HermesMarketValue : value;
+            }
+            if (age <= 15)
+            {
+                return value < 1_000_000 ? _dbContext.CarsBases.FirstOrDefault(c => c.HermesMarketValue > 1_000_000).HermesMarketValue : value;
             }
             age -= 5;
             for (int i = 1; i < age || i < 30; i++)

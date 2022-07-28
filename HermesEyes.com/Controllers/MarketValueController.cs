@@ -14,11 +14,13 @@ public class MarketValueController : ControllerBase
     private readonly ICarService _carService;
     private readonly ICrudServices _requestsbase;
     private readonly TokensProvider _tokensprovider;
-    public MarketValueController (ICarService carService, ICrudServices crudServices, TokensProvider tokensProvider)
+    private readonly IHttpConsumtionServices _httpConsumtionServices;
+    public MarketValueController (ICarService carService, ICrudServices crudServices, TokensProvider tokensProvider, IHttpConsumtionServices httpConsumtionServices)
     {
         _carService = carService;
         _requestsbase = crudServices;
         _tokensprovider = tokensProvider;
+        _httpConsumtionServices = httpConsumtionServices;
     }
 
     /// <summary>
@@ -36,8 +38,15 @@ public class MarketValueController : ControllerBase
             return Unauthorized(new MarketValueResponse("Token Invalid"));
         }
         int valeur= await _carService.FindSameCarValue(vin);
-        if (valeur<500000)
-        {
+        
+        if (valeur<600_000)
+        {   //Appel vin 
+           
+           var car=  await _httpConsumtionServices.FindCar(vin);
+            if(car!=null && car.HermesMarketValue > valeur)
+            {
+               return Ok(new MarketValueResponse(new MarketValue(valeur)));
+            }
             //Console.WriteLine(carBase.Model);
             await _requestsbase.Ajouter(vin);
             return NotFound(new MarketValueResponse());

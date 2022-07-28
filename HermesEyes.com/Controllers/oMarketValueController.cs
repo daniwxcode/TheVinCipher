@@ -43,16 +43,16 @@
 //        if (token == null || !_tokensprovider.IsValid(token))
 //        {
 //            return Unauthorized(new MarketValueResponse("Token Invalid"));
-//        }     
-//            var carBase = await _httpclient.FindCar(vin);
-//            if (carBase == null||carBase.Vin==null || carBase.Make ==null)
-//            {
-//                //Console.WriteLine(carBase.Model);
-//                await requestsbase.Ajouter(vin);
-//                return NotFound(new MarketValueResponse());
-//            }
+//        }
+//        var carBase = await _httpclient.FindCar(vin);
+//        if (carBase == null || carBase.Vin == null || carBase.Make == null)
+//        {
+//            //Console.WriteLine(carBase.Model);
+//            await requestsbase.Ajouter(vin);
+//            return NotFound(new MarketValueResponse());
+//        }
 //        MarketValue response = new MarketValue(carBase.HermesMarketValue);
 //        return Ok(new MarketValueResponse(response));
-//            }
+//    }
 //}
 

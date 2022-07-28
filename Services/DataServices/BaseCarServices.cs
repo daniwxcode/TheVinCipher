@@ -15,7 +15,7 @@ namespace Services.DataServices
         }
         public async Task<int> FindSameCarValue (string carVin)
         {
-
+            
             List<(int Effectif, double ValeurMoyenne)> distribution = new List<(int, double)>();
             var car = new Car();
             var cars = new List<Car>();
@@ -126,11 +126,15 @@ namespace Services.DataServices
                 }
             }
 
-
             car.Vin = carVin;
             car.ValueDate = DateTime.Now;
             car.MarketValue = (int)(somme / effectif) + new Random().Next(0, ajout);
-          
+            
+            if (DateTime.Today.Year - car.Year < 10 &&car.MarketValue<3_000_000 )
+            {
+                return _Repository.Cars.FirstOrDefault(c => c.Year == car.Year && c.MarketValue > 3_000_000).MarketValue??3_000254+new Random().Next(20000,500_000);
+              
+            }
 
             return car.MarketValue??0;
           //  return new Car();
