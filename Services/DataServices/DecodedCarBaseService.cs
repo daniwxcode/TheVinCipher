@@ -44,6 +44,10 @@ namespace Services.DataServices
             }
             try
             {
+                if(carbase == null)
+                {
+                    return new CarBase();
+                }
                 if (carbase!=null && !_dbContext.CarsBases.Any(c => c.Vin == carbase.Vin))
                 {
                     await _dbContext.CarsBases.AddAsync(carbase);

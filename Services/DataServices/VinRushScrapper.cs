@@ -102,7 +102,22 @@ namespace Services.DataServices
                var t4= result.TryAdd("overall_width", carbase?.OverallWidth??"");
                var t5= result.TryAdd("highway_mileage", carbase?.HighwayMileage??"");
             result["status"]= (!(t1&& t2 && t3 && t4 && t4 && carbase==null && result.Count<25)).ToString();
+            //if((t1 && t2 && t3 && t4 && t4 && carbase == null && result.Count < 25))
+            //{
+            //    try
+            //    {
+            //        await _dbContext.Requests.AddAsync(new Domaine.Entities.Requests()
+            //        {
+            //            IsManaged = false,
+            //            CreatedOn = DateTime.Now,
+            //            Vin = vin
+            //        });
+            //        await _dbContext.SaveChangesAsync();
+            //    }catch (Exception ex)
+            //    {
 
+            //    }
+            //}
           
             //if(result.Count > 20)
             //return Task.FromResult(result);

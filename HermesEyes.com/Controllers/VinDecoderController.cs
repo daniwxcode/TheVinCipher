@@ -1,9 +1,12 @@
 ﻿using HermesEyes.com.Model;
 
+using Infrastructure.Contexts;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 using Services.DataServices;
+using Services.Interfaces;
 
 namespace HermesEyes.com.Controllers
 {
@@ -13,10 +16,14 @@ namespace HermesEyes.com.Controllers
     {
         private readonly VinRushScrapper vinRushScrapper;
         private readonly TokensProvider _tokensprovider;
-        public VinDecoderController(TokensProvider tokensProvider, VinRushScrapper vinRushScrapper)
+        private readonly HermesContext _context;
+        private readonly ICrudServices _requestsbase;
+        public VinDecoderController(TokensProvider tokensProvider, VinRushScrapper vinRushScrapper, HermesContext context, ICrudServices crudServices)
         {
             this.vinRushScrapper = vinRushScrapper;
             _tokensprovider = tokensProvider;   
+            _context = context;
+            _requestsbase = crudServices;
 
         }
         [HttpGet()]
@@ -29,7 +36,14 @@ namespace HermesEyes.com.Controllers
             }
             vinRushScrapper.Vin = vin;
             var result = vinRushScrapper.IdentifyCarByVINAsync(vin);
-           
+            if (result.Result.Count < 25)
+            {
+                await _requestsbase.Ajouter(vin);
+            }
+            if(result.Result.Count < 15)
+            {
+                return NotFound(result);
+            }
 ;           return Ok (result);
         }
     }
