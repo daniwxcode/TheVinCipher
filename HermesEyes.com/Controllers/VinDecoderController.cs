@@ -40,7 +40,7 @@ namespace HermesEyes.com.Controllers
             {
                 await _requestsbase.Ajouter(vin);
             }
-            if(result.Result.Count < 15)
+            if(result.Result.Count < 6)
             {
                 return NotFound(result);
             }
