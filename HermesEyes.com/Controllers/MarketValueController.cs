@@ -33,26 +33,40 @@ public class MarketValueController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<MarketValueResponse>> GetMarketValue (string token, string vin)
     {
+
         if (token == null || !_tokensprovider.IsValid(token))
         {
             return Unauthorized(new MarketValueResponse("Token Invalid"));
         }
-        int valeur= await _carService.FindSameCarValue(vin);
+        if (vin.Contains("O") || vin.Contains("Q") || vin.Contains("I"))
+        {
+            var message = $"Vin Incorect: {vin}";
+            await _requestsbase.Ajouter(message);
+            return BadRequest(message);
+        }
         
+        int valeur = await _carService.FindSameCarValue(vin);
+        var car =  await _httpConsumtionServices.FindCar(vin);
+        if (car != null)
+        {
+            if(car.Year>= DateTime.Today.Year - 10)
+            {
+                valeur = car.HermesMarketValue;
+            }
+        }
         if (valeur<600_000)
-        {   //Appel vin 
-           
-           var car=  await _httpConsumtionServices.FindCar(vin);
-            if(car!=null && car.HermesMarketValue > valeur)
+        {   
+            if(car != null && car.HermesMarketValue > valeur)
             {
                return Ok(new MarketValueResponse(new MarketValue(valeur)));
             }
-            //Console.WriteLine(carBase.Model);
             await _requestsbase.Ajouter(vin);
             return NotFound(new MarketValueResponse());
         }
         MarketValue response = new MarketValue(valeur);
         return Ok(new MarketValueResponse(response));
     }
+
+
 }
 

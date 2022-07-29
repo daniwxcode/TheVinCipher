@@ -1,12 +1,8 @@
 ﻿using Domaine.Entities;
 
 using Infrastructure.APIs.Abstracts;
-using Infrastructure.APIs.Interfaces;
-using Infrastructure.APIs.VinCario.Models;
-using Infrastructure.APIs.VinCario.Services;
 using Infrastructure.Contexts;
 
-using Services.Extensions;
 using Services.Interfaces;
 
 using System.Globalization;
@@ -29,45 +25,36 @@ namespace Services.DataServices
 
         public async Task<CarBase> FindCar (string vin)
         {
-            CarBase carbase = null;
-            try
+            if (vin.IsValid())
             {
-                // Recherche en Ligne
-                carbase = await _api.GetResult(vin);
-                carbase.Vin = vin;
-                await OptimizeCarInfo(carbase);
-            }
-            catch (Exception ex)
-            {
-                // Sinon Hermes
+                CarBase carbase = null;
+                try
+                {
+                    // Recherche en Ligne
+                    carbase = await _api.GetResult(vin);
+                    if (carbase != null)
+                    {
+                        carbase.Year = vin.GetModelYear();
+                        carbase.Vin = vin;
+                        carbase.HermesMarketValue = int.Parse(carbase?.ManufacturerSuggestedRetailPrice, NumberStyles.Currency, CultureInfo.CreateSpecificCulture("us-US").NumberFormat) * 600;
+                        int age = DateTime.Today.Year - carbase.Year.Value;
+                        if (age > 4)
+                        {
+                            carbase.HermesMarketValue = await GetActualValue(carbase.HermesMarketValue, age);
+                        }
 
-            }
-            try
-            {
-                if(carbase == null)
-                {
-                    return new CarBase();
-                }
-                if (carbase!=null && !_dbContext.CarsBases.Any(c => c.Vin == carbase.Vin))
-                {
-                    await _dbContext.CarsBases.AddAsync(carbase);
-                   
-                }
-                else
-                {
-                     _dbContext.CarsBases.Update(carbase);
+                        return carbase;
+                    }
 
                 }
-                await _dbContext.SaveChangesAsync();
+                catch (Exception e)
+                {
+                   // return null;
+                }
             }
-            catch (Exception ex)
-            {
-                return new CarBase();
-            }
-
-            return carbase;
+            return null;
         }
-
+        #region ignore
         private async Task<CarBase> OptimizeCarInfo (CarBase carBase)
         {
             var vin = carBase.Vin;
@@ -88,11 +75,11 @@ namespace Services.DataServices
             {
                 carBase.Trim = Sameknown.FirstOrDefault(s => s.Trim != null)?.Trim;
             }
-            int age = DateTime.Now.Year - carBase?.Year??20;
+            int age = DateTime.Now.Year - carBase?.Year ?? 20;
             if (carBase.ManufacturerSuggestedRetailPrice == null)
             {
-                int val = _dbContext.CarsBases.Where(c=>c.Vin.Substring(0,11)== carBase.Vin.Substring(0,11)).Max(m=>m.HermesMarketValue);
-                var val2 = _dbContext.CarsBases.Where(c=>c.Vin.Substring(0,11)== carBase.Vin.Substring(0,11)).Average(m=>m.HermesMarketValue);
+                int val = _dbContext.CarsBases.Where(c => c.Vin.Substring(0, 11) == carBase.Vin.Substring(0, 11)).Max(m => m.HermesMarketValue);
+                var val2 = _dbContext.CarsBases.Where(c => c.Vin.Substring(0, 11) == carBase.Vin.Substring(0, 11)).Average(m => m.HermesMarketValue);
                 if (val == 0)
                 {
                     carBase.HermesMarketValue = (int)val2;
@@ -106,8 +93,8 @@ namespace Services.DataServices
             else
             {
 
-                carBase.HermesMarketValue = int.Parse(carBase.ManufacturerSuggestedRetailPrice, NumberStyles.Currency, CultureInfo.CreateSpecificCulture("us-US").NumberFormat)*600;
-              
+                carBase.HermesMarketValue = int.Parse(carBase.ManufacturerSuggestedRetailPrice, NumberStyles.Currency, CultureInfo.CreateSpecificCulture("us-US").NumberFormat) * 600;
+
             }
             carBase.HermesMarketValue = await GetActualValue(carBase.HermesMarketValue, age);
             try
@@ -115,19 +102,22 @@ namespace Services.DataServices
                 _dbContext.CarsBases.Update(carBase);
                 await _dbContext.SaveChangesAsync();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
 
             }
             return carBase;
         }
-        #region ignore
+
         private async Task<CarBase> ManageOldVin (string vin)
         {
 
             var car = _dbContext.Cars.Where(c => c.Vin.Length <= 17 && c.Vin.Substring(0, 5) == vin.Substring(0, 5) && c.MarketValue != 0).FirstOrDefault();
             if (car == null)
+            {
                 return null;
+            }
+
             var carBase = new CarBase()
             {
                 Vin = vin,
@@ -161,7 +151,10 @@ namespace Services.DataServices
 
             var car = _dbContext.Cars.Where(c => c.Vin.Length == 17 && c.Vin.Substring(0, 11) == vin.Substring(0, 11) && c.MarketValue != 0).OrderBy(t => t.MarketValue).Max();
             if (car == null)
+            {
                 return null;
+            }
+
             var carBase = new CarBase()
             {
                 Vin = vin,
@@ -195,9 +188,9 @@ namespace Services.DataServices
         {
             if (age <= 3)
             {
-                return value<10_000_000? _dbContext.CarsBases.FirstOrDefault(c=>c.HermesMarketValue>10_000_000).HermesMarketValue:value;
+                return value < 10_000_000 ? _dbContext.CarsBases.FirstOrDefault(c => c.HermesMarketValue > 10_000_000).HermesMarketValue : value;
             }
-            if(age <= 10)
+            if (age <= 10)
             {
                 return value < 5_000_000 ? _dbContext.CarsBases.FirstOrDefault(c => c.HermesMarketValue > 5_000_000).HermesMarketValue : value;
             }

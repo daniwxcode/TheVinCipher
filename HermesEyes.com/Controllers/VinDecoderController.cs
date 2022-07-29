@@ -26,25 +26,43 @@ namespace HermesEyes.com.Controllers
             _requestsbase = crudServices;
 
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="vin"></param>
+        /// <returns>Dictionary if OK code 200</returns>
+        /// <returns>Bad Request</returns>
+        /// <returns>Unauthorize</returns>
+        /// <returns>NotFound</returns>
         [HttpGet()]
         [HttpPost]
+        
         public async Task<ActionResult<Dictionary<string, string>>> Decode (string token, string vin)
         {
             if (token == null || !_tokensprovider.IsValid(token))
             {
                 return Unauthorized(new MarketValueResponse("Token Invalid"));
             }
+            if (vin.Contains("O") || vin.Contains("Q") || vin.Contains("I"))
+            {
+                var message = $"Vin Incorect: {vin}";
+                await _requestsbase.Ajouter(message);
+                return BadRequest(message);
+            }     
+                      
             vinRushScrapper.Vin = vin;
-            var result = vinRushScrapper.IdentifyCarByVINAsync(vin);
-            if (result.Result.Count < 25)
+            var result =await  vinRushScrapper.IdentifyCarByVINAsync(vin);            
+            result.TryAdd("model_year", vin.GetModelYear().ToString());
+            result.Remove("note");
+            result.Remove("adress_line_1");
+            result.Remove("adress_line_2");
+            if(result.Count <=7)
             {
                 await _requestsbase.Ajouter(vin);
-            }
-            if(result.Result.Count < 6)
-            {
                 return NotFound(result);
             }
-;           return Ok (result);
+;           return Ok(result);
         }
     }
 }
