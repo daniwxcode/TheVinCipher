@@ -34,6 +34,7 @@ namespace Services.DataServices
             {
                 // Recherche en Ligne
                 carbase = await _api.GetResult(vin);
+                carbase.Vin = vin;
                 await OptimizeCarInfo(carbase);
             }
             catch (Exception ex)
@@ -46,9 +47,14 @@ namespace Services.DataServices
                 if (carbase!=null && !_dbContext.CarsBases.Any(c => c.Vin == carbase.Vin))
                 {
                     await _dbContext.CarsBases.AddAsync(carbase);
-                    await _dbContext.SaveChangesAsync();
+                   
                 }
+                else
+                {
+                     _dbContext.CarsBases.Update(carbase);
 
+                }
+                await _dbContext.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -60,35 +66,55 @@ namespace Services.DataServices
 
         private async Task<CarBase> OptimizeCarInfo (CarBase carBase)
         {
-            //var vin = carBase.Vin;
-            //var Sameknown = _dbContext.Cars.Where(c => c.MarketValue != 0 && (c.Vin.Substring(0, 11) == vin.Substring(0, 11) || c.Vin.Substring(3, 6) == vin.Substring(3, 6)));
-            //if (carBase.Year == null || carBase.Year == 0)
-            //{
-            //    carBase.Year = Sameknown.FirstOrDefault(c => c.Year != 0 && c.Vin.Substring(9, 1) == vin.Substring(9, 1))?.Year;
-            //}
-            //if (carBase.FuelType == null || carBase.FuelType == String.Empty)
-            //{
-            //    carBase.FuelType = Sameknown.FirstOrDefault(c => c.Energy != null)?.Energy;
-            //}
-            //if (carBase.EngineSize == null || carBase.EngineSize == string.Empty)
-            //{
-            //    carBase.EngineSize = Sameknown.FirstOrDefault(s => s.Energy != null)?.EnginPower.ToString();
-            //}
-            //if (carBase.Trim == null)
-            //{
-            //    carBase.Trim = Sameknown.FirstOrDefault(s => s.Trim != null)?.Trim;
-            //}
-            int age = DateTime.Now.Year - carBase.Year.Value;
+            var vin = carBase.Vin;
+            var Sameknown = _dbContext.Cars.Where(c => c.MarketValue != 0 && (c.Vin.Substring(0, 11) == vin.Substring(0, 11) || c.Vin.Substring(3, 6) == vin.Substring(3, 6)));
+            if (carBase.Year == null || carBase.Year == 0)
+            {
+                carBase.Year = Sameknown.FirstOrDefault(c => c.Year != 0 && c.Vin.Substring(9, 1) == vin.Substring(9, 1))?.Year;
+            }
+            if (carBase.FuelType == null || carBase.FuelType == String.Empty)
+            {
+                carBase.FuelType = Sameknown.FirstOrDefault(c => c.Energy != null)?.Energy;
+            }
+            if (carBase.EngineSize == null || carBase.EngineSize == string.Empty)
+            {
+                carBase.EngineSize = Sameknown.FirstOrDefault(s => s.Energy != null)?.EnginPower.ToString();
+            }
+            if (carBase.Trim == null)
+            {
+                carBase.Trim = Sameknown.FirstOrDefault(s => s.Trim != null)?.Trim;
+            }
+            int age = DateTime.Now.Year - carBase?.Year??20;
             if (carBase.ManufacturerSuggestedRetailPrice == null)
             {
-                carBase.HermesMarketValue = _dbContext.CarsBases.Where(c=>c.Vin.Substring(0,11)== carBase.Vin.Substring(0,11)).Max(m=>m.HermesMarketValue);
+                int val = _dbContext.CarsBases.Where(c=>c.Vin.Substring(0,11)== carBase.Vin.Substring(0,11)).Max(m=>m.HermesMarketValue);
+                var val2 = _dbContext.CarsBases.Where(c=>c.Vin.Substring(0,11)== carBase.Vin.Substring(0,11)).Average(m=>m.HermesMarketValue);
+                if (val == 0)
+                {
+                    carBase.HermesMarketValue = (int)val2;
+                }
+                else
+                {
+                    carBase.HermesMarketValue = val;
+                }
+
             }
             else
             {
 
                 carBase.HermesMarketValue = int.Parse(carBase.ManufacturerSuggestedRetailPrice, NumberStyles.Currency, CultureInfo.CreateSpecificCulture("us-US").NumberFormat)*600;
+              
             }
             carBase.HermesMarketValue = await GetActualValue(carBase.HermesMarketValue, age);
+            try
+            {
+                _dbContext.CarsBases.Update(carBase);
+                await _dbContext.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+
+            }
             return carBase;
         }
         #region ignore

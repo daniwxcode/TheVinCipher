@@ -67,14 +67,20 @@ namespace Services.DataServices
             var carbase = _dbContext.CarsBases.Where(c => c.Vin.Substring(0, 11) == vin.Substring(0, 11) ||
            c.Vin.Substring(3,9)==vin.Substring(3,9)).FirstOrDefault();
             
-                result.Add("number_of_doors", (car?.Doors ?? 0).ToString());
+               
                 result.TryAdd("year",((carbase?.Year?? car?.Year)??0).ToString());
                 result.Add("trim", (car?.Trim ?? ""));
                 result.TryAdd("number_of_seater", ((carbase?.StandardSeating ?? car?.Seats)??0).
                     ToString());
                 result.TryAdd("trim", ((carbase?.Trim ?? car?.Trim)??"").ToString());
                 result.TryAdd("model", ((carbase?.Model ?? car?.Model)??"").ToString());
-                result.TryAdd("doors", ((carbase?.Doors ?? car?.Doors)??0).ToString());
+            int cardoors = 0;
+            cardoors = carbase?.Doors ?? 0;
+            if(cardoors == 0)
+            {
+                cardoors= car?.Doors ?? 0;
+            }
+            result.TryAdd("number_of_doors", cardoors.ToString());
                 result.TryAdd("engine_type", (carbase?.FuelType ?? car?.Energy)??"");
                 var capacity = car?.EngineCylender < 1000 ? car?.EngineCylender * 1000 : car?.EngineCylender;
                 if (capacity == 0)
