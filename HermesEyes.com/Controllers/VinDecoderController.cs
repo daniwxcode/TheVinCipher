@@ -97,7 +97,14 @@ public class VinDecoderController : ControllerBase
         {
             RenameKey(result, tuple.toremane, tuple.good);
         }
-
+        foreach(var item in result.Keys)
+        {
+           var tmp = result[item].Split('/');
+           if (tmp.Length > 1)
+            {
+                result[item] = tmp[0];
+            }
+        }
         return result;
     }
 
