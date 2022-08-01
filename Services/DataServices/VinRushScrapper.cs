@@ -53,7 +53,7 @@ namespace Services.DataServices
                         if(i==0)
                         tmp.Add(Regex.Replace(cell.InnerText, @"[^0-9a-zA-Z:, /]+", "").Trim());
                         else
-                            tmp.Add(cell.InnerText);
+                            tmp.Add(cell.InnerText.Trim());
                         //  Console.WriteLine("cell: " + cell.InnerText);
                         i++;
                     }
