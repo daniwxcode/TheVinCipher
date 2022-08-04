@@ -54,7 +54,7 @@ public class MarketValueController : ControllerBase
                 valeur = car.HermesMarketValue;
             }
         }
-        if (valeur<600_000)
+        if (valeur<400_000)
         {   
             if(car != null && car.HermesMarketValue > valeur)
             {

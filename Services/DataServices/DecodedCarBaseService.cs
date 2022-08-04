@@ -186,20 +186,9 @@ namespace Services.DataServices
         #endregion
         private async Task<int> GetActualValue (int value, int age)
         {
-            if (age <= 3)
-            {
-                return value < 10_000_000 ? _dbContext.CarsBases.FirstOrDefault(c => c.HermesMarketValue > 10_000_000).HermesMarketValue : value;
-            }
-            if (age <= 10)
-            {
-                return value < 5_000_000 ? _dbContext.CarsBases.FirstOrDefault(c => c.HermesMarketValue > 5_000_000).HermesMarketValue : value;
-            }
-            if (age <= 15)
-            {
-                return value < 1_000_000 ? _dbContext.CarsBases.FirstOrDefault(c => c.HermesMarketValue > 1_000_000).HermesMarketValue : value;
-            }
-            age -= 5;
-            for (int i = 1; i < age || i < 30; i++)
+           
+          age -= 5;
+            for (int i = 1; i < age && i < 30; i++)
             {
                 var taux = 0.0;
                 switch (i)
@@ -235,6 +224,18 @@ namespace Services.DataServices
 
                 value = (int)(value * (1 - taux));
             }
+            //if(age<=3)
+            //{
+            //    return value<8_000_000 ? _dbContext.CarsBases.FirstOrDefault(c => c.HermesMarketValue>10_000_000).HermesMarketValue : value;
+            //}
+            //if(age<=5)
+            //{
+            //    return value<4_000_000 ? _dbContext.CarsBases.FirstOrDefault(c => c.HermesMarketValue>5_000_000).HermesMarketValue : value;
+            //}
+            //if(age<=15)
+            //{
+            //    return value<1_000_000 ? _dbContext.CarsBases.FirstOrDefault(c => c.HermesMarketValue>1_000_000).HermesMarketValue : value;
+            //}
             return value;
         }
 
