@@ -43,9 +43,9 @@ public class MarketValueController : ControllerBase
             var message = $"Vin Incorect: {vin}";
             await _requestsbase.Ajouter(message);
             return BadRequest(message);
-        }
-        
+        }       
         int valeur = await _carService.FindSameCarValue(vin);
+
         var car =  await _httpConsumtionServices.FindCar(vin);
         if (car != null)
         {

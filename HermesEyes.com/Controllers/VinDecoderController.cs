@@ -1,4 +1,6 @@
-﻿using Flurl.Http;
+﻿using Domaine.Entities.Hermes;
+
+using Flurl.Http;
 
 using HermesEyes.com.Model;
 
@@ -27,7 +29,6 @@ public class VinDecoderController : ControllerBase
         _tokensprovider = tokensProvider;
         _context = context;
         _requestsbase = crudServices;
-
     }
     /// <summary>
     /// 
@@ -53,25 +54,40 @@ public class VinDecoderController : ControllerBase
             await _requestsbase.Ajouter(message);
             return BadRequest(message);
         }
+        var existingCar = _context.HermesCars.FirstOrDefault(c=>c.VIN == vin);
+        
+        if(existingCar!=null)
+        {
+            return Ok(existingCar.DecodedValues);
+        }
 
         vinRushScrapper.Vin = vin;
         var result = await vinRushScrapper.IdentifyCarByVINAsync(vin);
-        result.TryAdd("model_year", vin.GetModelYear().ToString());
-        result.Remove("note");
-        result.Remove("adress_line_1");
-        result.Remove("adress_line_2");
+        result.TryAdd("model_year",vin.GetModelYear().ToString());
         if (result.Count <= 7)
         {
             result = await _requestUsBase(vin);
             result = await decodingParser(result);
-            if (result.Count > 7)
+            if (result.Count < 7)
             {
-                return Ok(result);
+                await _requestsbase.Ajouter(vin);
+                return NotFound(result);                
             }
-            await _requestsbase.Ajouter(vin);
-            return NotFound(result);
+           
+            
         }
-; return Ok(result);
+        var hermescar = new HermesCar(result,vin);
+        try
+        {
+            await _context.HermesCars.AddAsync(hermescar);
+            await _context.SaveChangesAsync();
+        }catch (Exception ex)
+        {
+
+        }
+        result.Remove("Base Price");
+        return Ok(result);
+       
     }
 
     private async Task<Dictionary<string, string>> _requestUsBase (string vin)
@@ -105,6 +121,10 @@ public class VinDecoderController : ControllerBase
                 result[item] = tmp[0];
             }
         }
+      
+        result.Remove("notea");
+        result.Remove("adress_line_1");
+        result.Remove("adress_line_2");
         return result;
     }
 
