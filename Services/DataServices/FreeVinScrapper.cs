@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Services.DataServices
 {
-    public class FreeVinScrapper : IVinDecoder<Dictionary<string, string>>
+    public class FreeVinScrapper //: IVinDecoder<Dictionary<string, string>>
     {
         private readonly IScrappableSource source;
         public bool Succes { get; set; }

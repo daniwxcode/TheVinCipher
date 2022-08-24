@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="APIs\FreeVin\**" />
+    <EmbeddedResource Remove="APIs\FreeVin\**" />
+    <None Remove="APIs\FreeVin\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Interfaces\" />
   </ItemGroup>
 

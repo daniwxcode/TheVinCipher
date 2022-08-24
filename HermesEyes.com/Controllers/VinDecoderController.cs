@@ -6,7 +6,10 @@ using HermesEyes.com.Model;
 
 using Infrastructure.Contexts;
 
+using Jint.Runtime;
+
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 using Services.DataServices;
 using Services.Interfaces;
@@ -64,12 +67,17 @@ public class VinDecoderController : ControllerBase
         vinRushScrapper.Vin = vin;
         var result = await vinRushScrapper.IdentifyCarByVINAsync(vin);
         result.TryAdd("model_year",vin.GetModelYear().ToString());
-        if (result.Count <= 7)
+        if (result.Count <= 17)
         {
             result = await _requestUsBase(vin);
             result = await decodingParser(result);
-            if (result.Count < 7)
+            if (result.Count < 17)
             {
+                result = await vinRushScrapper.IdentifyCarByVINAsync(vin, 1);
+                result = await decodingParser(result);
+                if(result.Count>17)
+                    return Ok(result);
+
                 await _requestsbase.Ajouter(vin);
                 return NotFound(result);                
             }
@@ -105,6 +113,15 @@ public class VinDecoderController : ControllerBase
 
     private async Task<Dictionary<string, string>> decodingParser (Dictionary<string, string> result)
     {
+        foreach (var pair in result)
+        {
+            if (pair.Value == "Not Applicable")
+            {
+                result.Remove(pair.Key);
+               
+            }
+        }
+
         foreach (var label in badlabels)
         {
             result.Remove(label);
@@ -138,14 +155,20 @@ public class VinDecoderController : ControllerBase
          "NCSA Model",
          "Lane Departure Warning LDW",
          "Base Price",
+         "Additional Error Text",
+         "Motorcycle Chassis Type",
+         "image",
+         "exec"
 
 
     };
     private readonly List<(string good, string toremane)> goodLabels = new List<(string, string)>()
    {
         ("make","Make"),
+        ("make","brand"),
         ("model","Model"),
         ("model_year","Model Year"),
+        ("model_year","year"),
         ("trim_level","Trim"),
         ("body_style","Body Class"),
         ("fuel_type","Fuel Type  Primary"),
@@ -156,6 +179,7 @@ public class VinDecoderController : ControllerBase
         ("body_type","Body Class"),
         ("number_of_doors","Doors"),
         ("number_of_seats","Number of Seats"),
+        ("number_of_seats","number_of_seater"),
         ("displacement_si","Displacement CC"),
         ("displacement_nominal","Displacement L"),
         ("engine_head","Engine Configuration"),

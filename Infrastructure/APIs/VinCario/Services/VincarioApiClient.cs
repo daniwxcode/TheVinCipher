@@ -19,7 +19,7 @@ namespace Infrastructure.APIs.VinCario.Services
 
         public bool Succes { get; set; } = false;
 
-        public async Task<VinCarioResult> IdentifyCarByVINAsync (string vin)
+        public async Task<VinCarioResult> IdentifyCarByVINAsync (string vin,int us =0)
         {
             VinCarioResult vinCarioResult= null;
             try
@@ -48,7 +48,7 @@ namespace Infrastructure.APIs.VinCario.Services
 
         }
 
-        public string GetUri (string vin)
+        public string GetUri (string vin , int us=0)
         {
             string? controlsum = controlrsum(vin);
             return $"{apiProvider.ApiUrlPrefix }/{apiProvider.ApiKeyToken}/{controlsum}/decode/{vin}.json";

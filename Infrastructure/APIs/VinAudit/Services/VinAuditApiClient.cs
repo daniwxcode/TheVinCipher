@@ -22,7 +22,7 @@ namespace Infrastructure.APIs.VinCario.Services
 
         public bool Succes { get; set; } = false;
 
-        public async Task<VinAuditResponse> IdentifyCarByVINAsync (string vin)
+        public async Task<VinAuditResponse> IdentifyCarByVINAsync (string vin, int us = 0)
         {
             VinAuditResponse vinAuditResponse = null;
             try
@@ -54,7 +54,7 @@ namespace Infrastructure.APIs.VinCario.Services
 
         }
 
-        public string GetUri (string vin)
+        public string GetUri (string vin, int us=0)
         {
             var url = $"{apiProvider.ApiUrlPrefix}key={apiProvider.ApiKeyToken}&format=json&vin={vin}";
             return url;

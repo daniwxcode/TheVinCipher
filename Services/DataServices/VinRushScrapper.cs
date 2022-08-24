@@ -27,12 +27,12 @@ namespace Services.DataServices
 
         public bool Succes { get; set; }
 
-        public async Task<Dictionary<string, string>> IdentifyCarByVINAsync (string vin)
+        public async Task<Dictionary<string, string>> IdentifyCarByVINAsync (string vin,int us=0)
         {
             var response = new Dictionary<string, object>();
             WebClient webClient = new WebClient();
             //  string page = webClient.DownloadString(GetUri(vin));
-            string page = webClient.DownloadString(GetUri(vin));
+            string page = webClient.DownloadString(GetUri(vin,us));
 
             HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
             doc.LoadHtml(page);
@@ -109,10 +109,11 @@ namespace Services.DataServices
             return result;
         }
 
-        public string GetUri (string vin)
+        public string GetUri (string vin,int us)
         {
-            return $"https://www.freevindecoder.eu/{vin}";
-            //source.GetUrlAsync(vin).Result;
+            return source.GetUrlAsync(vin,us).Result;
         }
+
+        
     }
 }

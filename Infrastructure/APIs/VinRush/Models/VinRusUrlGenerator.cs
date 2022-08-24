@@ -8,8 +8,9 @@ namespace Infrastructure.APIs.VinRush.Models
     {
         
 
-        public async Task<string> GetUrlAsync (string vin)
+        public async Task<string> GetUrlAsync (string vin, int us =0)
         {
+            if (us == 0) return $"https://www.freevindecoder.eu/{vin}";
             var ulrPrefix = "https://www.vinrush.com/en/decode-check/";
             var engine = new Engine();
             var fromValue = engine.Execute(Javascript.Js);

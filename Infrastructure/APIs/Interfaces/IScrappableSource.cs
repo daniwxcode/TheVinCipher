@@ -8,6 +8,6 @@ namespace Infrastructure.APIs.Interfaces
 {
     public interface IScrappableSource
     {
-        public Task<string> GetUrlAsync (string vin);
+        public Task<string> GetUrlAsync (string vin, int us =0);
     }
 }
