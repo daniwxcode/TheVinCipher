@@ -57,11 +57,17 @@ public class VinDecoderController : ControllerBase
             await _requestsbase.Ajouter(message);
             return BadRequest(message);
         }
-        var existingCar = _context.HermesCars.FirstOrDefault(c=>c.VIN == vin);
-        
-        if(existingCar!=null)
+        try
         {
-            return Ok(existingCar.DecodedValues);
+            var existingCar = _context.HermesCars.FirstOrDefault(c => c.VIN == vin);
+
+            if (existingCar != null)
+            {
+                return Ok(existingCar.DecodedValues);
+            }
+        }catch(Exception e)
+        {
+            
         }
 
         vinRushScrapper.Vin = vin;
@@ -104,11 +110,16 @@ public class VinDecoderController : ControllerBase
         var url = $"https://vpic.nhtsa.dot.gov/api/vehicles/decodevinextended/{vin}?format=json";
         var response = new Dictionary<string, string>();
         var result = await url.GetJsonAsync<VinDecodeRoot>();
-        return response = result.Results.Where(i => i.Value != null).Select(r => new
+        var res = result.Results.Where(i => i.Value != null).Select(r => new
         {
             label = Regex.Replace(r.Variable, @"[^0-9a-zA-Z:, /]+", "").Trim(),
             value = r.Value,
-        }).ToList().ToDictionary(keySelector: m => m.label, elementSelector: m => m.value);
+        }).ToList();
+        foreach (var item in res)
+        {
+            response.TryAdd(item.label, item.value);
+        }
+        return response;
     }
 
     private async Task<Dictionary<string, string>> decodingParser (Dictionary<string, string> result)
