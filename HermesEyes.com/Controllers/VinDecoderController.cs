@@ -76,29 +76,27 @@ public class VinDecoderController : ControllerBase
         if (result.Count <= 17)
         {
             result = await _requestUsBase(vin);
-            result = await decodingParser(result);
+            
             if (result.Count < 17)
             {
-                result = await vinRushScrapper.IdentifyCarByVINAsync(vin, 1);
-                result = await decodingParser(result);
+                result = await vinRushScrapper.IdentifyCarByVINAsync(vin, 1);                
                 if(result.Count>17)
                     return Ok(result);
-
                 await _requestsbase.Ajouter(vin);
                 return NotFound(result);                
-            }
-           
+            }          
             
         }
-        var hermescar = new HermesCar(result,vin);
-        try
-        {
-            await _context.HermesCars.AddAsync(hermescar);
-            await _context.SaveChangesAsync();
-        }catch (Exception ex)
-        {
+        result = await decodingParser(result);
+        //var hermescar = new HermesCar(result,vin);
+        //try
+        //{
+        //    await _context.HermesCars.AddAsync(hermescar);
+        //    await _context.SaveChangesAsync();
+        //}catch (Exception ex)
+        //{
 
-        }
+        //}
         result.Remove("Base Price");
         return Ok(result);
        
@@ -149,7 +147,11 @@ public class VinDecoderController : ControllerBase
                 result[item] = tmp[0];
             }
         }
-      
+        var make = result["brand"];
+        if (make != null)
+        {
+            result.TryAdd("Make", make);
+        }
         result.Remove("notea");
         result.Remove("adress_line_1");
         result.Remove("adress_line_2");
@@ -176,7 +178,8 @@ public class VinDecoderController : ControllerBase
     private readonly List<(string good, string toremane)> goodLabels = new List<(string, string)>()
    {
         ("make","Make"),
-        ("make","brand"),
+        ("brand","Make"),
+        ("BRAND","Make"),
         ("model","Model"),
         ("model_year","Model Year"),
         ("model_year","year"),
@@ -215,6 +218,7 @@ public class VinDecoderController : ControllerBase
         {
 
         }
+        
 
     }
 }
