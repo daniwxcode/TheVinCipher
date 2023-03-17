@@ -137,6 +137,7 @@ public class VinDecoderController : ControllerBase
         }
         foreach (var tuple in goodLabels)
         {
+            if (result.ContainsKey(tuple.toremane))
             RenameKey(result, tuple.toremane, tuple.good);
         }
         foreach(var item in result.Keys)
@@ -147,7 +148,8 @@ public class VinDecoderController : ControllerBase
                 result[item] = tmp[0];
             }
         }
-        var make = result["brand"];
+        string make; 
+        if (result.TryGetValue("brand",out make))         
         if (make != null)
         {
             result.TryAdd("Make", make);
