@@ -2,6 +2,7 @@
 
 using Flurl.Http;
 
+using HermesEyes.com.Extensions;
 using HermesEyes.com.Model;
 
 using Infrastructure.Contexts;
@@ -59,6 +60,11 @@ public class VinDecoderController : ControllerBase
         }
         try
         {
+            var filedata = DictionaryExtension.loadBinFile(vin);
+            if(filedata != null)
+            {
+                return Ok(filedata);
+            }
             var existingCar = _context.HermesCars.FirstOrDefault(c => c.VIN == vin);
 
             if (existingCar != null)
@@ -88,16 +94,9 @@ public class VinDecoderController : ControllerBase
             
         }
         result = await decodingParser(result);
-        //var hermescar = new HermesCar(result,vin);
-        //try
-        //{
-        //    await _context.HermesCars.AddAsync(hermescar);
-        //    await _context.SaveChangesAsync();
-        //}catch (Exception ex)
-        //{
-
-        //}
+        result.SaveToFile(vin);
         result.Remove("Base Price");
+        
         return Ok(result);
        
     }

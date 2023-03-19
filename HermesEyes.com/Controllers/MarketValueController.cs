@@ -1,4 +1,5 @@
-﻿using HermesEyes.com.Model;
+﻿using HermesEyes.com.Extensions;
+using HermesEyes.com.Model;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -61,8 +62,12 @@ public class MarketValueController : ControllerBase
                return Ok(new MarketValueResponse(new MarketValue(valeur)));
             }
             await _requestsbase.Ajouter(vin);
+
+            var data = DictionaryExtension.loadBinFile(vin);
+
             return NotFound(new MarketValueResponse());
         }
+
         MarketValue response = new MarketValue(valeur);
         return Ok(new MarketValueResponse(response));
     }
