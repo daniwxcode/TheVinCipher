@@ -63,7 +63,7 @@ public class MarketValueController : ControllerBase
             }
             await _requestsbase.Ajouter(vin);
 
-            var data = DictionaryExtension.loadBinFile(vin);
+            //var data = DictionaryExtension.loadBinFile(vin);
 
             return NotFound(new MarketValueResponse());
         }
