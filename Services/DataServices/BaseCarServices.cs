@@ -38,8 +38,11 @@ namespace Services.DataServices
             var vinToSearch = carVin.Substring(0, limit);            
             var ourValuecar = _Repository.CarsBases.FirstOrDefault(c => c.Vin.StartsWith(vinToSearch) );
             
-            if(ourValuecar != null && ourValuecar.HermesMarketValue!=0)
+            if(ourValuecar != null && ourValuecar.HermesMarketValue != 0)
+            {
                 return ourValuecar.HermesMarketValue;
+            }
+            
             car = _Repository.Cars.FirstOrDefault(c => c.Vin.StartsWith(vinToSearch));            
           
             if (car == null)
@@ -107,7 +110,7 @@ namespace Services.DataServices
             var groupe = distribution.Count();
 
 
-            int age = DateTime.Now.Year - car.Year;
+            int age = DateTime.Now.Year - car.Year.Value;
             int ajout = 0;
             if (age < 5)
             {

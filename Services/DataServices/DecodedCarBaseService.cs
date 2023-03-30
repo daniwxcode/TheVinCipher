@@ -138,7 +138,7 @@ namespace Services.DataServices
             };
             if (carBase.Year != 0)
             {
-                int age = DateTime.Now.Year - car.Year;
+                int age = DateTime.Now.Year - car.Year.Value;
                 int value = (int)(car.MarketValue * 1.1);
                 carBase.HermesMarketValue = await GetActualValue(value, age);
             }
@@ -175,7 +175,7 @@ namespace Services.DataServices
             };
             if (carBase.Year != 0)
             {
-                int age = DateTime.Now.Year - car.Year;
+                int age = DateTime.Now.Year - car.Year.Value;
                 int value = (int)(car.MarketValue * 1.1);
                 carBase.HermesMarketValue = await GetActualValue(value, age);
             }
