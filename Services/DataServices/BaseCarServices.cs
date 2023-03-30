@@ -35,10 +35,13 @@ namespace Services.DataServices
                         break;
                     }
             }
-            var ourValuecar = _Repository.CarsBases.FirstOrDefault(c => c.Vin.Substring(0, limit) == carVin.Substring(0, limit));
+            var vinToSearch = carVin.Substring(0, limit);            
+            var ourValuecar = _Repository.CarsBases.FirstOrDefault(c => c.Vin.StartsWith(vinToSearch) );
+            
             if(ourValuecar != null && ourValuecar.HermesMarketValue!=0)
                 return ourValuecar.HermesMarketValue;
-            car = _Repository.Cars.Where(c => c.Vin.Substring(0, limit) == carVin.Substring(0, limit)).OrderByDescending(m=>m.MarketValue).FirstOrDefault();
+            car = _Repository.Cars.FirstOrDefault(c => c.Vin.StartsWith(vinToSearch));            
+          
             if (car == null)
             {
                 return 0;
