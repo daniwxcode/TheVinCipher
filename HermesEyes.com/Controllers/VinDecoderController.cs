@@ -1,5 +1,4 @@
-﻿using Domaine.Entities;
-using Domaine.Entities.Hermes;
+﻿using Domaine.Entities.Hermes;
 
 using Flurl.Http;
 
@@ -7,10 +6,7 @@ using HermesEyes.com.Model;
 
 using Infrastructure.Contexts;
 
-using Jint.Runtime;
-
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 using Services.DataServices;
 using Services.Interfaces;
@@ -50,7 +46,7 @@ public class VinDecoderController : ControllerBase
     {
 
         if (!tokenProvider.IsValid(token, out var tokenInfo)
-            || tokenInfo.IsFunctionAllowed(AllowedFunction.Decode)
+            || !tokenInfo.IsFunctionAllowed(AllowedFunction.Decode)
             )
         {
             return Unauthorized(new MarketValueResponse("Token Invalid"));
@@ -70,7 +66,7 @@ public class VinDecoderController : ControllerBase
                 return Ok(existingCar.DecodedValues);
             }
         }
-        catch (Exception e)
+        catch (Exception)
         {
 
         }
@@ -101,7 +97,7 @@ public class VinDecoderController : ControllerBase
             await _context.HermesCars.AddAsync(hermescar);
             await _context.SaveChangesAsync();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
 
         }
@@ -162,7 +158,7 @@ public class VinDecoderController : ControllerBase
         return result;
     }
 
-    private readonly List<string> badlabels = new List<string>()
+    private readonly List<string> badlabels = new()
     {
          "Suggested VIN",
          "Error Code",
@@ -179,7 +175,7 @@ public class VinDecoderController : ControllerBase
 
 
     };
-    private readonly List<(string good, string toremane)> goodLabels = new List<(string, string)>()
+    private readonly List<(string good, string toremane)> goodLabels = new()
    {
         ("make","Make"),
         ("make","brand"),
@@ -217,7 +213,7 @@ public class VinDecoderController : ControllerBase
             dic.Remove(fromKey);
             dic[toKey] = value;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
 
         }

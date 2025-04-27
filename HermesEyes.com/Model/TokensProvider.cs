@@ -13,7 +13,8 @@ namespace HermesEyes.com.Model
         public string Token { get; set; }
         public bool IsFunctionAllowed(AllowedFunction function)
         {
-            return AllowedFunctions.Contains(function);
+            bool isAllowed = AllowedFunctions.Any(_=>_==function);
+            return isAllowed;
         }
         public List<AllowedFunction> AllowedFunctions { get; set; } = new();
     }
