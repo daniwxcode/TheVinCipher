@@ -1,22 +1,44 @@
-﻿namespace HermesEyes.com.Model
+﻿using Microsoft.Extensions.Configuration;
+
+namespace HermesEyes.com.Model
 {
+    public enum AllowedFunction
+    {
+        Decode,
+        Evaluate
+    }
+
+    public class TokenInfo
+    {
+        public string Token { get; set; }
+        public bool IsFunctionAllowed(AllowedFunction function)
+        {
+            return AllowedFunctions.Contains(function);
+        }
+        public List<AllowedFunction> AllowedFunctions { get; set; } = new();
+    }
+
     public class TokensProvider
     {
         private readonly ConfigurationManager _configurationManager;
         public TokensProvider (ConfigurationManager configurationManager)
         {
             _configurationManager = configurationManager;
-            Tokens = _configurationManager["Tokens"].Split(',').ToList();
+            Tokens = Tokens = _configurationManager.GetSection("Tokens").Get<List<TokenInfo>>() ?? new List<TokenInfo>();
         }
-        public List<string> Tokens { get; set; }
-        public bool IsValid (string token)
-        {
-            if (token == null)
-            {
-                return false;
-            }
+        private List<TokenInfo> Tokens { get; set; } = new();
 
-            return Tokens.Contains(token);
+        public bool IsValid(string token, out TokenInfo? tokenInfo)
+        {
+            tokenInfo = null;
+
+            if (string.IsNullOrEmpty(token))
+                return false;
+
+            tokenInfo = Tokens.FirstOrDefault(t => t.Token == token);
+            return tokenInfo != null;
         }
+
+
     }
 }

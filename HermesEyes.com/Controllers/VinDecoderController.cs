@@ -1,8 +1,8 @@
-﻿using Domaine.Entities.Hermes;
+﻿using Domaine.Entities;
+using Domaine.Entities.Hermes;
 
 using Flurl.Http;
 
-using HermesEyes.com.Extensions;
 using HermesEyes.com.Model;
 
 using Infrastructure.Contexts;
@@ -24,13 +24,13 @@ namespace HermesEyes.com.Controllers;
 public class VinDecoderController : ControllerBase
 {
     private readonly VinRushScrapper vinRushScrapper;
-    private readonly TokensProvider _tokensprovider;
+    private readonly TokensProvider tokenProvider;
     private readonly HermesContext _context;
     private readonly ICrudServices _requestsbase;
-    public VinDecoderController (TokensProvider tokensProvider, VinRushScrapper vinRushScrapper, HermesContext context, ICrudServices crudServices)
+    public VinDecoderController(TokensProvider tokensProvider, VinRushScrapper vinRushScrapper, HermesContext context, ICrudServices crudServices)
     {
         this.vinRushScrapper = vinRushScrapper;
-        _tokensprovider = tokensProvider;
+        tokenProvider = tokensProvider;
         _context = context;
         _requestsbase = crudServices;
     }
@@ -46,9 +46,12 @@ public class VinDecoderController : ControllerBase
     [HttpGet()]
     [HttpPost]
 
-    public async Task<ActionResult<Dictionary<string, string>>> Decode (string token, string vin)
+    public async Task<ActionResult<Dictionary<string, string>>> Decode(string token, string vin)
     {
-        if (token == null || !_tokensprovider.IsValid(token))
+
+        if (!tokenProvider.IsValid(token, out var tokenInfo)
+            || tokenInfo.IsFunctionAllowed(AllowedFunction.Decode)
+            )
         {
             return Unauthorized(new MarketValueResponse("Token Invalid"));
         }
@@ -60,48 +63,54 @@ public class VinDecoderController : ControllerBase
         }
         try
         {
-            var filedata = DictionaryExtension.loadBinFile(vin);
-            if(filedata != null)
-            {
-                return Ok(filedata);
-            }
             var existingCar = _context.HermesCars.FirstOrDefault(c => c.VIN == vin);
 
             if (existingCar != null)
             {
                 return Ok(existingCar.DecodedValues);
             }
-        }catch(Exception e)
+        }
+        catch (Exception e)
         {
-            
+
         }
 
         vinRushScrapper.Vin = vin;
         var result = await vinRushScrapper.IdentifyCarByVINAsync(vin);
-        result.TryAdd("model_year",vin.GetModelYear().ToString());
+        result.TryAdd("model_year", vin.GetModelYear().ToString());
         if (result.Count <= 17)
         {
-            result = await _requestUsBase(vin);
-            
+            result = await RequestUsBase(vin);
+            result = DecodingParser(result);
             if (result.Count < 17)
             {
-                result = await vinRushScrapper.IdentifyCarByVINAsync(vin, 1);                
-                if(result.Count>17)
+                result = await vinRushScrapper.IdentifyCarByVINAsync(vin, 1);
+                result = DecodingParser(result);
+                if (result.Count > 17)
                     return Ok(result);
+
                 await _requestsbase.Ajouter(vin);
-                return NotFound(result);                
-            }          
-            
+                return NotFound(result);
+            }
+
+
         }
-        result = await decodingParser(result);
-        result.SaveToFile(vin);
+        var hermescar = new HermesCar(result, vin);
+        try
+        {
+            await _context.HermesCars.AddAsync(hermescar);
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+
+        }
         result.Remove("Base Price");
-        
         return Ok(result);
-       
+
     }
 
-    private async Task<Dictionary<string, string>> _requestUsBase (string vin)
+    private async Task<Dictionary<string, string>> RequestUsBase(string vin)
     {
 
         var url = $"https://vpic.nhtsa.dot.gov/api/vehicles/decodevinextended/{vin}?format=json";
@@ -119,14 +128,14 @@ public class VinDecoderController : ControllerBase
         return response;
     }
 
-    private async Task<Dictionary<string, string>> decodingParser (Dictionary<string, string> result)
+    private Dictionary<string, string> DecodingParser(Dictionary<string, string> result)
     {
         foreach (var pair in result)
         {
             if (pair.Value == "Not Applicable")
             {
                 result.Remove(pair.Key);
-               
+
             }
         }
 
@@ -136,23 +145,17 @@ public class VinDecoderController : ControllerBase
         }
         foreach (var tuple in goodLabels)
         {
-            if (result.ContainsKey(tuple.toremane))
             RenameKey(result, tuple.toremane, tuple.good);
         }
-        foreach(var item in result.Keys)
+        foreach (var item in result.Keys)
         {
-           var tmp = result[item].Split('/');
-           if (tmp.Length > 1)
+            var tmp = result[item].Split('/');
+            if (tmp.Length > 1)
             {
                 result[item] = tmp[0];
             }
         }
-        string make; 
-        if (result.TryGetValue("brand",out make))         
-        if (make != null)
-        {
-            result.TryAdd("Make", make);
-        }
+
         result.Remove("notea");
         result.Remove("adress_line_1");
         result.Remove("adress_line_2");
@@ -179,8 +182,7 @@ public class VinDecoderController : ControllerBase
     private readonly List<(string good, string toremane)> goodLabels = new List<(string, string)>()
    {
         ("make","Make"),
-        ("brand","Make"),
-        ("BRAND","Make"),
+        ("make","brand"),
         ("model","Model"),
         ("model_year","Model Year"),
         ("model_year","year"),
@@ -206,7 +208,7 @@ public class VinDecoderController : ControllerBase
 
     };
 
-    private void RenameKey (Dictionary<string, string> dic,
+    private void RenameKey(Dictionary<string, string> dic,
                                       string fromKey, string toKey)
     {
         try
@@ -219,7 +221,6 @@ public class VinDecoderController : ControllerBase
         {
 
         }
-        
 
     }
 }
