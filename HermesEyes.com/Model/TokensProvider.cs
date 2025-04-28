@@ -11,12 +11,21 @@ namespace HermesEyes.com.Model
     public class TokenInfo
     {
         public string Token { get; set; }
+        public List<AllowedFunction> AllowedFunctions { get; set; } = new();
+        public DateTime? DateLimite { get; set; }
         public bool IsFunctionAllowed(AllowedFunction function)
         {
             bool isAllowed = AllowedFunctions.Any(_=>_==function);
             return isAllowed;
         }
-        public List<AllowedFunction> AllowedFunctions { get; set; } = new();
+        public bool IsExpired()
+        {
+            if (DateLimite is null)
+                return false;
+
+            return DateTime.UtcNow > DateLimite.Value;
+        }
+
     }
 
     public class TokensProvider
@@ -25,7 +34,7 @@ namespace HermesEyes.com.Model
         public TokensProvider (ConfigurationManager configurationManager)
         {
             _configurationManager = configurationManager;
-            Tokens = Tokens = _configurationManager.GetSection("Tokens").Get<List<TokenInfo>>() ?? new List<TokenInfo>();
+            Tokens = _configurationManager.GetSection("Tokens").Get<List<TokenInfo>>() ?? new List<TokenInfo>();
         }
         private List<TokenInfo> Tokens { get; set; } = new();
 
@@ -37,7 +46,7 @@ namespace HermesEyes.com.Model
                 return false;
 
             tokenInfo = Tokens.FirstOrDefault(t => t.Token == token);
-            return tokenInfo != null;
+            return tokenInfo != null && !tokenInfo.IsExpired();
         }
 
 
