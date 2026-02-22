@@ -1,0 +1,616 @@
+{
+  "settings": {
+    "components": {
+      "code": false,
+      "binaries": false
+    },
+    "targetId": "net10.0",
+    "targetDisplayName": ".NETCoreApp,Version=v10.0"
+  },
+  "analysisStartTime": "2026-02-22T14:40:28.5737572Z",
+  "analysisEndTime": "2026-02-22T14:40:38.710904Z",
+  "privacyModeHelpUrl": "https://go.microsoft.com/fwlink/?linkid=2270980",
+  "stats": {
+    "summary": {
+      "projects": 4,
+      "issues": 5,
+      "incidents": 16,
+      "effort": 16
+    },
+    "charts": {
+      "severity": {
+        "Mandatory": 6,
+        "Optional": 0,
+        "Potential": 10,
+        "Information": 0
+      },
+      "category": {
+        "NuGet": 8,
+        "Project": 4,
+        "Api": 4
+      }
+    }
+  },
+  "projects": [
+    {
+      "path": "Domaine\\Domaine.csproj",
+      "startingProject": true,
+      "issues": 2,
+      "storyPoints": 3,
+      "properties": {
+        "appName": "Domaine",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "net6.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 9,
+        "numberOfCodeFiles": 9,
+        "linesTotal": 444,
+        "linesOfCode": 444,
+        "totalApiScanned": 954,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "4799ed0d-da72-47f1-88cb-5bdb5a4f4f1a",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Domaine\\Domaine.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.EntityFrameworkCore.Abstractions, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore.Abstractions, and replace with new package Microsoft.EntityFrameworkCore.Abstractions 10.0.3",
+              "protected": "Microsoft.EntityFrameworkCore.Abstractions, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore.Abstractions, and replace with new package Microsoft.EntityFrameworkCore.Abstractions 10.0.3"
+            },
+            "kind": "File",
+            "path": "Domaine\\Domaine.csproj",
+            "snippet": "Microsoft.EntityFrameworkCore.Abstractions, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore.Abstractions, and replace with new package Microsoft.EntityFrameworkCore.Abstractions 10.0.3",
+            "protectedSnippet": "Microsoft.EntityFrameworkCore.Abstractions, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore.Abstractions, and replace with new package Microsoft.EntityFrameworkCore.Abstractions 10.0.3",
+            "label": "Microsoft.EntityFrameworkCore.Abstractions 6.0.2",
+            "properties": {
+              "PackageId": "Microsoft.EntityFrameworkCore.Abstractions",
+              "PackageVersion": "6.0.2",
+              "PackageNewVersion": "10.0.3",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "5514e383-75e3-47d6-a228-a64e0f1b9900",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Domaine\\Domaine.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Newtonsoft.Json, 13.0.1\n\nRecommandation\u00A0:\n\nRemove Newtonsoft.Json, and replace with new package Newtonsoft.Json 13.0.4",
+              "protected": "Newtonsoft.Json, 13.0.1\n\nRecommandation\u00A0:\n\nRemove Newtonsoft.Json, and replace with new package Newtonsoft.Json 13.0.4"
+            },
+            "kind": "File",
+            "path": "Domaine\\Domaine.csproj",
+            "snippet": "Newtonsoft.Json, 13.0.1\n\nRecommandation\u00A0:\n\nRemove Newtonsoft.Json, and replace with new package Newtonsoft.Json 13.0.4",
+            "protectedSnippet": "Newtonsoft.Json, 13.0.1\n\nRecommandation\u00A0:\n\nRemove Newtonsoft.Json, and replace with new package Newtonsoft.Json 13.0.4",
+            "label": "Newtonsoft.Json 13.0.1",
+            "properties": {
+              "PackageId": "Newtonsoft.Json",
+              "PackageVersion": "13.0.1",
+              "PackageNewVersion": "13.0.4",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "3e47d511-3ec6-4edd-81d3-d8aeb48e7750",
+          "ruleId": "Project.0002",
+          "projectPath": "Domaine\\Domaine.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Infrastructure cible actuelle: net6.0\nInfrastructure cible recommand\u00E9: net10.0",
+              "protected": "Infrastructure cible actuelle: net6.0\nInfrastructure cible recommand\u00E9: net10.0"
+            },
+            "kind": "File",
+            "path": "Domaine\\Domaine.csproj",
+            "snippet": "Infrastructure cible actuelle: net6.0\nInfrastructure cible recommand\u00E9: net10.0",
+            "protectedSnippet": "Infrastructure cible actuelle: net6.0\nInfrastructure cible recommand\u00E9: net10.0",
+            "properties": {
+              "CurrentTargetFramework": "net6.0",
+              "RecommendedTargetFramework": "net10.0"
+            }
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "HermesEyes.com\\HermesEyes.com.csproj",
+      "startingProject": true,
+      "issues": 3,
+      "storyPoints": 4,
+      "properties": {
+        "appName": "HermesEyes.com",
+        "projectKind": "AspNetCore",
+        "frameworks": [
+          "net6.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 14,
+        "numberOfCodeFiles": 12,
+        "linesTotal": 815,
+        "linesOfCode": 748,
+        "totalApiScanned": 922,
+        "minLinesOfCodeToChange": 2,
+        "maxLinesOfCodeToChange": 2
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "63757bbe-ce3a-4e99-9bcb-621bfa1efd15",
+          "ruleId": "NuGet.0002",
+          "projectPath": "HermesEyes.com\\HermesEyes.com.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.EntityFrameworkCore.Design, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore.Design, and replace with new package Microsoft.EntityFrameworkCore.Design 10.0.3",
+              "protected": "Microsoft.EntityFrameworkCore.Design, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore.Design, and replace with new package Microsoft.EntityFrameworkCore.Design 10.0.3"
+            },
+            "kind": "File",
+            "path": "HermesEyes.com\\HermesEyes.com.csproj",
+            "snippet": "Microsoft.EntityFrameworkCore.Design, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore.Design, and replace with new package Microsoft.EntityFrameworkCore.Design 10.0.3",
+            "protectedSnippet": "Microsoft.EntityFrameworkCore.Design, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore.Design, and replace with new package Microsoft.EntityFrameworkCore.Design 10.0.3",
+            "label": "Microsoft.EntityFrameworkCore.Design 6.0.2",
+            "properties": {
+              "PackageId": "Microsoft.EntityFrameworkCore.Design",
+              "PackageVersion": "6.0.2",
+              "PackageNewVersion": "10.0.3",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "e51c8097-dbc6-4cf9-83f1-9b1be8ef3fa6",
+          "ruleId": "Project.0002",
+          "projectPath": "HermesEyes.com\\HermesEyes.com.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Infrastructure cible actuelle: net6.0\nInfrastructure cible recommand\u00E9: net10.0",
+              "protected": "Infrastructure cible actuelle: net6.0\nInfrastructure cible recommand\u00E9: net10.0"
+            },
+            "kind": "File",
+            "path": "HermesEyes.com\\HermesEyes.com.csproj",
+            "snippet": "Infrastructure cible actuelle: net6.0\nInfrastructure cible recommand\u00E9: net10.0",
+            "protectedSnippet": "Infrastructure cible actuelle: net6.0\nInfrastructure cible recommand\u00E9: net10.0",
+            "properties": {
+              "CurrentTargetFramework": "net6.0",
+              "RecommendedTargetFramework": "net10.0"
+            }
+          }
+        },
+        {
+          "incidentId": "4b4b9eb6-8d21-43d9-b9a3-dbd6a4da6fdf",
+          "ruleId": "Api.0001",
+          "description": "Breaking change: DynamicallyAccessedMembers annotation removed from trim-unsafe configuration APIs ",
+          "projectPath": "HermesEyes.com\\HermesEyes.com.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Tokens = _configurationManager.GetSection(\u0022Tokens\u0022).Get\u003CList\u003CTokenInfo\u003E\u003E() ?? new List\u003CTokenInfo\u003E();",
+              "protected": "M:Microsoft.Extensions.Configuration.ConfigurationBinder.Get\u0060\u00601(Microsoft.Extensions.Configuration.IConfiguration)"
+            },
+            "kind": "File",
+            "path": "HermesEyes.com\\Model\\TokensProvider.cs",
+            "snippet": "Tokens = _configurationManager.GetSection(\u0022Tokens\u0022).Get\u003CList\u003CTokenInfo\u003E\u003E() ?? new List\u003CTokenInfo\u003E();",
+            "protectedSnippet": "M:Microsoft.Extensions.Configuration.ConfigurationBinder.Get\u0060\u00601(Microsoft.Extensions.Configuration.IConfiguration)",
+            "label": "M:Microsoft.Extensions.Configuration.ConfigurationBinder.Get\u0060\u00601(Microsoft.Extensions.Configuration.IConfiguration)",
+            "links": [
+              {
+                "title": "Documentation sur les API",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/extensions/10.0/dynamically-accessed-members-configuration.md",
+                "isCustom": false
+              }
+            ],
+            "line": 36,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "f7969f37-a54d-41a0-bbe1-63eeb951349f",
+          "ruleId": "Api.0001",
+          "description": "Breaking change: DynamicallyAccessedMembers annotation removed from trim-unsafe configuration APIs ",
+          "projectPath": "HermesEyes.com\\HermesEyes.com.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Tokens = _configurationManager.GetSection(\u0022Tokens\u0022).Get\u003CList\u003CTokenInfo\u003E\u003E() ?? new List\u003CTokenInfo\u003E();",
+              "protected": "M:Microsoft.Extensions.Configuration.ConfigurationBinder.Get\u0060\u00601(Microsoft.Extensions.Configuration.IConfiguration)"
+            },
+            "kind": "File",
+            "path": "HermesEyes.com\\Model\\TokensProvider.cs",
+            "snippet": "Tokens = _configurationManager.GetSection(\u0022Tokens\u0022).Get\u003CList\u003CTokenInfo\u003E\u003E() ?? new List\u003CTokenInfo\u003E();",
+            "protectedSnippet": "M:Microsoft.Extensions.Configuration.ConfigurationBinder.Get\u0060\u00601(Microsoft.Extensions.Configuration.IConfiguration)",
+            "label": "M:Microsoft.Extensions.Configuration.ConfigurationBinder.Get\u0060\u00601(Microsoft.Extensions.Configuration.IConfiguration)",
+            "links": [
+              {
+                "title": "Documentation sur les API",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/extensions/10.0/dynamically-accessed-members-configuration.md",
+                "isCustom": false
+              }
+            ],
+            "line": 36,
+            "column": 12
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "Infrastructure\\Infrastructure.csproj",
+      "startingProject": true,
+      "issues": 3,
+      "storyPoints": 6,
+      "properties": {
+        "appName": "Infrastructure",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "net6.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 30,
+        "numberOfCodeFiles": 30,
+        "linesTotal": 2615,
+        "linesOfCode": 2615,
+        "totalApiScanned": 3173,
+        "minLinesOfCodeToChange": 1,
+        "maxLinesOfCodeToChange": 1
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "b7549044-9c28-4845-be57-523f9830bb9c",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Infrastructure\\Infrastructure.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.EntityFrameworkCore, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore, and replace with new package Microsoft.EntityFrameworkCore 10.0.3",
+              "protected": "Microsoft.EntityFrameworkCore, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore, and replace with new package Microsoft.EntityFrameworkCore 10.0.3"
+            },
+            "kind": "File",
+            "path": "Infrastructure\\Infrastructure.csproj",
+            "snippet": "Microsoft.EntityFrameworkCore, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore, and replace with new package Microsoft.EntityFrameworkCore 10.0.3",
+            "protectedSnippet": "Microsoft.EntityFrameworkCore, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore, and replace with new package Microsoft.EntityFrameworkCore 10.0.3",
+            "label": "Microsoft.EntityFrameworkCore 6.0.2",
+            "properties": {
+              "PackageId": "Microsoft.EntityFrameworkCore",
+              "PackageVersion": "6.0.2",
+              "PackageNewVersion": "10.0.3",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "df7cd585-e70b-43ae-a1db-4ca8e0689f78",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Infrastructure\\Infrastructure.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.EntityFrameworkCore.Design, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore.Design, and replace with new package Microsoft.EntityFrameworkCore.Design 10.0.3",
+              "protected": "Microsoft.EntityFrameworkCore.Design, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore.Design, and replace with new package Microsoft.EntityFrameworkCore.Design 10.0.3"
+            },
+            "kind": "File",
+            "path": "Infrastructure\\Infrastructure.csproj",
+            "snippet": "Microsoft.EntityFrameworkCore.Design, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore.Design, and replace with new package Microsoft.EntityFrameworkCore.Design 10.0.3",
+            "protectedSnippet": "Microsoft.EntityFrameworkCore.Design, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore.Design, and replace with new package Microsoft.EntityFrameworkCore.Design 10.0.3",
+            "label": "Microsoft.EntityFrameworkCore.Design 6.0.2",
+            "properties": {
+              "PackageId": "Microsoft.EntityFrameworkCore.Design",
+              "PackageVersion": "6.0.2",
+              "PackageNewVersion": "10.0.3",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "a6321c8f-0c37-406d-befe-4c5856acb13c",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Infrastructure\\Infrastructure.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.EntityFrameworkCore.SqlServer, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore.SqlServer, and replace with new package Microsoft.EntityFrameworkCore.SqlServer 10.0.3",
+              "protected": "Microsoft.EntityFrameworkCore.SqlServer, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore.SqlServer, and replace with new package Microsoft.EntityFrameworkCore.SqlServer 10.0.3"
+            },
+            "kind": "File",
+            "path": "Infrastructure\\Infrastructure.csproj",
+            "snippet": "Microsoft.EntityFrameworkCore.SqlServer, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore.SqlServer, and replace with new package Microsoft.EntityFrameworkCore.SqlServer 10.0.3",
+            "protectedSnippet": "Microsoft.EntityFrameworkCore.SqlServer, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore.SqlServer, and replace with new package Microsoft.EntityFrameworkCore.SqlServer 10.0.3",
+            "label": "Microsoft.EntityFrameworkCore.SqlServer 6.0.2",
+            "properties": {
+              "PackageId": "Microsoft.EntityFrameworkCore.SqlServer",
+              "PackageVersion": "6.0.2",
+              "PackageNewVersion": "10.0.3",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "0ef226db-5d8b-4160-b291-1e693683e3d1",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Infrastructure\\Infrastructure.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.EntityFrameworkCore.Tools, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore.Tools, and replace with new package Microsoft.EntityFrameworkCore.Tools 10.0.3",
+              "protected": "Microsoft.EntityFrameworkCore.Tools, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore.Tools, and replace with new package Microsoft.EntityFrameworkCore.Tools 10.0.3"
+            },
+            "kind": "File",
+            "path": "Infrastructure\\Infrastructure.csproj",
+            "snippet": "Microsoft.EntityFrameworkCore.Tools, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore.Tools, and replace with new package Microsoft.EntityFrameworkCore.Tools 10.0.3",
+            "protectedSnippet": "Microsoft.EntityFrameworkCore.Tools, 6.0.2\n\nRecommandation\u00A0:\n\nRemove Microsoft.EntityFrameworkCore.Tools, and replace with new package Microsoft.EntityFrameworkCore.Tools 10.0.3",
+            "label": "Microsoft.EntityFrameworkCore.Tools 6.0.2",
+            "properties": {
+              "PackageId": "Microsoft.EntityFrameworkCore.Tools",
+              "PackageVersion": "6.0.2",
+              "PackageNewVersion": "10.0.3",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "8a22c246-7be9-41df-9398-44a169bf8921",
+          "ruleId": "Project.0002",
+          "projectPath": "Infrastructure\\Infrastructure.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Infrastructure cible actuelle: net6.0\nInfrastructure cible recommand\u00E9: net10.0",
+              "protected": "Infrastructure cible actuelle: net6.0\nInfrastructure cible recommand\u00E9: net10.0"
+            },
+            "kind": "File",
+            "path": "Infrastructure\\Infrastructure.csproj",
+            "snippet": "Infrastructure cible actuelle: net6.0\nInfrastructure cible recommand\u00E9: net10.0",
+            "protectedSnippet": "Infrastructure cible actuelle: net6.0\nInfrastructure cible recommand\u00E9: net10.0",
+            "properties": {
+              "CurrentTargetFramework": "net6.0",
+              "RecommendedTargetFramework": "net10.0"
+            }
+          }
+        },
+        {
+          "incidentId": "03c1b7cd-1388-4844-b17f-84a2c3ab1843",
+          "ruleId": "Api.0002",
+          "description": "Derived cryptographic types are obsolete. Use the Create method on the base type instead. ",
+          "projectPath": "Infrastructure\\Infrastructure.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "byte[]? hashData = new SHA1Managed().ComputeHash(data);",
+              "protected": "T:System.Security.Cryptography.SHA1Managed"
+            },
+            "kind": "File",
+            "path": "Infrastructure\\APIs\\Extensions\\StringExtensions.cs",
+            "snippet": "byte[]? hashData = new SHA1Managed().ComputeHash(data);",
+            "protectedSnippet": "T:System.Security.Cryptography.SHA1Managed",
+            "label": "T:System.Security.Cryptography.SHA1Managed",
+            "links": [
+              {
+                "title": "Documentation sur les API",
+                "url": "https://aka.ms/dotnet-warnings/SYSLIB0021",
+                "isCustom": false
+              }
+            ],
+            "line": 11,
+            "column": 12
+          }
+        }
+      ],
+      "features": [
+        {
+          "featureId": "CryptographyLegacy",
+          "incidents": [
+            "03c1b7cd-1388-4844-b17f-84a2c3ab1843"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "Services\\Services.csproj",
+      "startingProject": true,
+      "issues": 3,
+      "storyPoints": 3,
+      "properties": {
+        "appName": "Services",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "net6.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 12,
+        "numberOfCodeFiles": 12,
+        "linesTotal": 1697,
+        "linesOfCode": 1697,
+        "totalApiScanned": 2441,
+        "minLinesOfCodeToChange": 1,
+        "maxLinesOfCodeToChange": 1
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "3e4f114c-2395-48f0-9af0-72c787bdba26",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Services\\Services.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Newtonsoft.Json, 13.0.1\n\nRecommandation\u00A0:\n\nRemove Newtonsoft.Json, and replace with new package Newtonsoft.Json 13.0.4",
+              "protected": "Newtonsoft.Json, 13.0.1\n\nRecommandation\u00A0:\n\nRemove Newtonsoft.Json, and replace with new package Newtonsoft.Json 13.0.4"
+            },
+            "kind": "File",
+            "path": "Services\\Services.csproj",
+            "snippet": "Newtonsoft.Json, 13.0.1\n\nRecommandation\u00A0:\n\nRemove Newtonsoft.Json, and replace with new package Newtonsoft.Json 13.0.4",
+            "protectedSnippet": "Newtonsoft.Json, 13.0.1\n\nRecommandation\u00A0:\n\nRemove Newtonsoft.Json, and replace with new package Newtonsoft.Json 13.0.4",
+            "label": "Newtonsoft.Json 13.0.1",
+            "properties": {
+              "PackageId": "Newtonsoft.Json",
+              "PackageVersion": "13.0.1",
+              "PackageNewVersion": "13.0.4",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "9f55cff0-fef8-4d57-8c14-b52991939029",
+          "ruleId": "Project.0002",
+          "projectPath": "Services\\Services.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Infrastructure cible actuelle: net6.0\nInfrastructure cible recommand\u00E9: net10.0",
+              "protected": "Infrastructure cible actuelle: net6.0\nInfrastructure cible recommand\u00E9: net10.0"
+            },
+            "kind": "File",
+            "path": "Services\\Services.csproj",
+            "snippet": "Infrastructure cible actuelle: net6.0\nInfrastructure cible recommand\u00E9: net10.0",
+            "protectedSnippet": "Infrastructure cible actuelle: net6.0\nInfrastructure cible recommand\u00E9: net10.0",
+            "properties": {
+              "CurrentTargetFramework": "net6.0",
+              "RecommendedTargetFramework": "net10.0"
+            }
+          }
+        },
+        {
+          "incidentId": "401c53e6-530d-44ea-bec4-8efdb0036a3f",
+          "ruleId": "Api.0002",
+          "description": "WebRequest, HttpWebRequest, ServicePoint, and WebClient are obsolete. Use HttpClient instead. ",
+          "projectPath": "Services\\Services.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "WebClient webClient = new WebClient();",
+              "protected": "M:System.Net.WebClient.#ctor"
+            },
+            "kind": "File",
+            "path": "Services\\DataServices\\VinRushScrapper.cs",
+            "snippet": "WebClient webClient = new WebClient();",
+            "protectedSnippet": "M:System.Net.WebClient.#ctor",
+            "label": "M:System.Net.WebClient.#ctor",
+            "links": [
+              {
+                "title": "Documentation sur les API",
+                "url": "https://aka.ms/dotnet-warnings/SYSLIB0014",
+                "isCustom": false
+              }
+            ],
+            "line": 32,
+            "column": 12
+          }
+        }
+      ],
+      "features": []
+    }
+  ],
+  "rules": {
+    "NuGet.0002": {
+      "id": "NuGet.0002",
+      "isFeature": false,
+      "description": "La mise \u00E0 niveau du package NuGet est recommand\u00E9e pour l\u2019infrastructure cible s\u00E9lectionn\u00E9e.\n\nLes packages .NET standard sont recommand\u00E9s pour avoir des versions correspondant \u00E0 la version de .NET cibl\u00E9e par le projet.\n\nCertains autres packages fonctionnent \u00E9galement mieux pour les infrastructures cibles s\u00E9lectionn\u00E9es.",
+      "label": "La mise \u00E0 niveau du package NuGet est recommand\u00E9e",
+      "severity": "Potential",
+      "effort": 1,
+      "links": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=2262530",
+          "isCustom": false
+        }
+      ]
+    },
+    "Project.0002": {
+      "id": "Project.0002",
+      "isFeature": false,
+      "description": "Le ou les infrastructures cibles du projet doivent \u00EAtre remplac\u00E9es par la nouvelle infrastructure cible que vous avez s\u00E9lectionn\u00E9e pour cette mise \u00E0 niveau.\n\nPendant la mise \u00E0 niveau, l\u2019infrastructure cible est ajust\u00E9e en fonction de la plateforme correspondante, le cas \u00E9ch\u00E9ant. Dans certains cas, le projet entra\u00EEnera plusieurs infrastructures cibles apr\u00E8s la mise \u00E0 niveau s\u2019il utilisait des fonctionnalit\u00E9s qui ont d\u00E9sormais leurs propres plateformes dans les infrastructures .NET modernes (Windows, iOS, Android, etc.).",
+      "label": "Le ou les frameworks cibles du projet doivent \u00EAtre modifi\u00E9s",
+      "severity": "Mandatory",
+      "effort": 1,
+      "links": [
+        {
+          "title": "Vue d\u2019ensemble du transfert de .NET Framework vers .NET",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2265227",
+          "isCustom": false
+        },
+        {
+          "title": "Kits de d\u00E9veloppement logiciel (SDK) de projet .NET",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2265226",
+          "isCustom": false
+        }
+      ]
+    },
+    "Api.0002": {
+      "id": "Api.0002",
+      "isFeature": false,
+      "description": "API is source incompatible for selected .NET version: requires code changes to compile successfully when targeting a new version, such as removing obsolete APIs or changing method signatures.",
+      "label": "Source incompatible for selected .NET version",
+      "severity": "Potential",
+      "effort": 1,
+      "links": [
+        {
+          "title": "Changements cassants dans .NET",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2262679",
+          "isCustom": false
+        }
+      ]
+    },
+    "CryptographyLegacy": {
+      "id": "CryptographyLegacy",
+      "isFeature": false,
+      "description": "Obsolete or insecure cryptographic algorithms that have been deprecated for security reasons. These algorithms are no longer considered secure by modern standards. Migrate to modern cryptographic APIs using secure algorithms.",
+      "label": "Legacy Cryptography",
+      "severity": "Mandatory",
+      "effort": 2,
+      "links": [
+        {
+          "title": "Cryptography in .NET",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2341612",
+          "isCustom": false
+        }
+      ]
+    },
+    "Api.0001": {
+      "id": "Api.0001",
+      "isFeature": false,
+      "description": "API is binary incompatible for selected .NET version: affects existing binaries, often requiring recompilation, because the API has changed in a way that prevents older binaries from loading or executing.",
+      "label": "Binary incompatible for selected .NET version",
+      "severity": "Mandatory",
+      "effort": 1,
+      "links": [
+        {
+          "title": "Changements cassants dans .NET",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2262679",
+          "isCustom": false
+        }
+      ]
+    }
+  }
+}
