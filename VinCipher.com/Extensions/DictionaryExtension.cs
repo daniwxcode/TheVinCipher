@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text.Json;
 
-namespace HermesEyes.com.Extensions
+namespace VinCipher.Extensions
 {
     public static class DictionaryExtension
     {

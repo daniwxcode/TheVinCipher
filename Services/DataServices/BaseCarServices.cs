@@ -8,10 +8,10 @@ namespace Services.DataServices
 {
     public class BaseCarServices : ICarService
     {
-        private readonly HermesContext _Repository;
-        public BaseCarServices (HermesContext hermesContext)
+        private readonly VinCipherContext _Repository;
+        public BaseCarServices (VinCipherContext context)
         {
-            _Repository = hermesContext;
+            _Repository = context;
         }
         public async Task<int> FindSameCarValue (string carVin)
         {

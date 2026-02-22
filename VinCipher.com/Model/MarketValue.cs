@@ -1,4 +1,4 @@
-﻿namespace HermesEyes.com.Model
+﻿namespace VinCipher.Model
 {
     public class MarketValue
     {

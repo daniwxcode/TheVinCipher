@@ -11,13 +11,13 @@ namespace Services.DataServices
 {
     public class DecodedCarBaseService : IHttpConsumtionServices
     {
-        private readonly HermesContext _dbContext;
+        private readonly VinCipherContext _dbContext;
         private readonly BaseApiProviderClient<CarBase> _api;
         private readonly BaseApiProvider _baseApiProvider;
         private readonly ICarService _carService;
-        public DecodedCarBaseService (HermesContext hermesContext, HttpClient httpClient, BaseApiProvider apiProvider, BaseApiProviderClient<CarBase> client, ICarService carService)
+        public DecodedCarBaseService (VinCipherContext context, HttpClient httpClient, BaseApiProvider apiProvider, BaseApiProviderClient<CarBase> client, ICarService carService)
         {
-            _dbContext = hermesContext;
+            _dbContext = context;
             _baseApiProvider = apiProvider;
             _carService = carService;
             _api = client;
@@ -36,7 +36,7 @@ namespace Services.DataServices
                     {
                         carbase.Year = vin.GetModelYear();
                         carbase.Vin = vin;
-                        carbase.HermesMarketValue = int.Parse(carbase?.ManufacturerSuggestedRetailPrice, NumberStyles.Currency, CultureInfo.CreateSpecificCulture("us-US").NumberFormat) * 600;
+                        carbase.MarketValue = int.Parse(carbase?.ManufacturerSuggestedRetailPrice, NumberStyles.Currency, CultureInfo.CreateSpecificCulture("us-US").NumberFormat) * 600;
                         int age = DateTime.Today.Year - carbase.Year.Value;
                         if (age > 4)
                         {

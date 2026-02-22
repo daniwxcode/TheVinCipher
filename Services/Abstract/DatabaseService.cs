@@ -4,10 +4,10 @@ namespace Services.Abstract
 {
     public abstract class DatabaseService
     {
-        protected HermesContext _dbContext;
-        public DatabaseService (HermesContext hermesContext)
+        protected VinCipherContext _dbContext;
+        public DatabaseService (VinCipherContext vinCipherContext)
         {
-            _dbContext = hermesContext;
+            _dbContext = vinCipherContext;
         }
     }
 }

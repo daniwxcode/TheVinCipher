@@ -8,10 +8,10 @@ namespace Services.DataServices
 {
     public class VinToSearchServices : ICrudServices
     {
-        private readonly HermesContext _repository;
-        public VinToSearchServices (HermesContext hermes)
+        private readonly VinCipherContext _repository;
+        public VinToSearchServices (VinCipherContext context)
         {
-            _repository = hermes;
+            _repository = context;
         }
         public async Task Ajouter (string element)
         {

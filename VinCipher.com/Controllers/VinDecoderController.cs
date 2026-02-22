@@ -1,8 +1,8 @@
-﻿using Domaine.Entities.Hermes;
+﻿using Domaine.Entities.VinCipher;
 
 using Flurl.Http;
 
-using HermesEyes.com.Model;
+using VinCipher.Model;
 
 using Infrastructure.Contexts;
 
@@ -13,7 +13,7 @@ using Services.Interfaces;
 
 using System.Text.RegularExpressions;
 
-namespace HermesEyes.com.Controllers;
+namespace VinCipher.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -21,9 +21,9 @@ public class VinDecoderController : ControllerBase
 {
     private readonly VinRushScrapper vinRushScrapper;
     private readonly TokensProvider tokenProvider;
-    private readonly HermesContext _context;
+    private readonly VinCipherContext _context;
     private readonly ICrudServices _requestsbase;
-    public VinDecoderController(TokensProvider tokensProvider, VinRushScrapper vinRushScrapper, HermesContext context, ICrudServices crudServices)
+    public VinDecoderController(TokensProvider tokensProvider, VinRushScrapper vinRushScrapper, VinCipherContext context, ICrudServices crudServices)
     {
         this.vinRushScrapper = vinRushScrapper;
         tokenProvider = tokensProvider;
@@ -59,7 +59,7 @@ public class VinDecoderController : ControllerBase
         }
         try
         {
-            var existingCar = _context.HermesCars.FirstOrDefault(c => c.VIN == vin);
+            var existingCar = _context.VinCipherCars.FirstOrDefault(c => c.VIN == vin);
 
             if (existingCar != null)
             {
@@ -91,10 +91,10 @@ public class VinDecoderController : ControllerBase
 
 
         }
-        var hermescar = new HermesCar(result, vin);
+        var hermescar = new VinCipherCar(result, vin);
         try
         {
-            await _context.HermesCars.AddAsync(hermescar);
+            await _context.VinCipherCars.AddAsync(hermescar);
             await _context.SaveChangesAsync();
         }
         catch (Exception)

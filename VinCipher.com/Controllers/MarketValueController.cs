@@ -1,12 +1,12 @@
-﻿using HermesEyes.com.Extensions;
-using HermesEyes.com.Model;
+﻿using VinCipher.Extensions;
+using VinCipher.Model;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 using Services.Interfaces;
 
-namespace HermesEyes.com.Controllers;
+namespace VinCipher.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -54,12 +54,12 @@ public class MarketValueController : ControllerBase
         {
             if(car.Year>= DateTime.Today.Year - 10)
             {
-                valeur = car.HermesMarketValue;
+                valeur = car.MarketValue;
             }
         }
         if (valeur<400_000)
         {   
-            if(car != null && car.HermesMarketValue > valeur)
+            if(car != null && car.MarketValue > valeur)
             {
                return Ok(new MarketValueResponse(new MarketValue(valeur)));
             }

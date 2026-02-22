@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Infrastructure.Migrations
 {
-    [DbContext(typeof(HermesContext))]
+    [DbContext(typeof(VinCipherContext))]
     [Migration("20220302100121_InitModel")]
     partial class InitModel
     {

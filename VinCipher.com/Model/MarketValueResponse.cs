@@ -1,8 +1,8 @@
 ﻿using Domaine.Entities;
 
-using HermesEyes.com.Abstracts;
+using VinCipher.Abstracts;
 
-namespace HermesEyes.com.Model
+namespace VinCipher.Model
 {
     public class MarketValueResponse {
         public  bool Success { get; }

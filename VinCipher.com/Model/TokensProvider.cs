@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 
-namespace HermesEyes.com.Model
+namespace VinCipher.Model
 {
     public enum AllowedFunction
     {

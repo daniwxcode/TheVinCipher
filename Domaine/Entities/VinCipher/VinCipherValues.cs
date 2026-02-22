@@ -5,14 +5,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domaine.Entities.Hermes
+namespace Domaine.Entities.VinCipher
 {
-    public class HermesValues
+    public class VinCipherValues
     {
         [Key]
         public int Id { get; set; }
         public string? Vin { get; set; }
-        public int HermesValue { get; set; }
+        public int CipherValue { get; set; }
         public DateTime valueDate { get; set; }= DateTime.Now;
 
     }

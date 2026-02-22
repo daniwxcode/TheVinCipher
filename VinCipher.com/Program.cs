@@ -1,7 +1,7 @@
 
 using Domaine.Entities;
 
-using HermesEyes.com.Model;
+using VinCipher.Model;
 
 using Infrastructure.APIs.Abstracts;
 using Infrastructure.APIs.Interfaces;
@@ -20,7 +20,7 @@ var builder = WebApplication.CreateBuilder(args);
 ConfigurationManager configuration = builder.Configuration;
 // Add services to the container.
 
-builder.Services.AddDbContext<HermesContext>(option =>
+builder.Services.AddDbContext<VinCipherContext>(option =>
 {
     option.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
 

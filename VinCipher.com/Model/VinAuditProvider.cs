@@ -1,6 +1,6 @@
 ﻿using Infrastructure.APIs.Abstracts;
 
-namespace HermesEyes.com.Model
+namespace VinCipher.Model
 {
     public class VinAuditProvider : BaseApiProvider
     {

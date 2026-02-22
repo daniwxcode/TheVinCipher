@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace HermesEyes.com.Model
+namespace VinCipher.Model
 {
     public class VinDecodingResult
     {

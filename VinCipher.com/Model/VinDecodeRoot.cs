@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace HermesEyes.com.Model
+namespace VinCipher.Model
 {
     // Root myDeserializedClass = JsonSerializer.Deserialize<Root>(myJsonResponse);
     public class Result
