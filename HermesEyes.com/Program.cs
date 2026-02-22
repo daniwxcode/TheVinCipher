@@ -11,6 +11,8 @@ using Infrastructure.Contexts;
 
 using Microsoft.EntityFrameworkCore;
 
+using Scalar.AspNetCore;
+
 using Services.DataServices;
 using Services.Interfaces;
 
@@ -36,20 +38,37 @@ builder.Services.AddHttpClient<BaseApiProviderClient<CarBase>, VinAuditApiClient
 builder.Services.AddHttpClient<IHttpConsumtionServices, DecodedCarBaseService>();
 builder.Services.AddControllers();
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Learn more about configuring OpenAPI at https://learn.microsoft.com/aspnet/core/fundamentals/openapi
+builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.MapOpenApi();
+    app.MapScalarApiReference(options =>
+    {
+        options
+        .WithTheme(ScalarTheme.Kepler)
+        .HideDarkModeToggle()
+        .WithClientButton(true);
+    });
 }
 
 app.UseHttpsRedirection();
+
+app.UseDefaultFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        if (ctx.File.Name.EndsWith(".html"))
+        {
+            ctx.Context.Response.ContentType = "text/html; charset=utf-8";
+        }
+    }
+});
 
 app.UseAuthorization();
 

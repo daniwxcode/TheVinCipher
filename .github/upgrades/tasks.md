@@ -4,10 +4,10 @@
 
 | Status | Count |
 |:---|:---:|
-| ? Completed | 0 |
+| ? Completed | 2 |
 | ?? In Progress | 0 |
-| ? Not Started | 7 |
-| ? Failed | 0 |
+| ? Not Started | 5 |
+**Progress**: 2/7 tasks complete (28%) ![28%](https://progress-bar.xyz/28)
 | ? Skipped | 0 |
 | **Total** | **7** |
 
@@ -15,33 +15,33 @@
 
 ## Tasks
 
-### [?] TASK-001: Verify Prerequisites
+### [?] TASK-001: Verify Prerequisites *(Completed: 2026-02-22 15:02)*
 **Scope**: Solution-wide
 **References**: Plan §2 Phase 0
 
 **Actions:**
 - [?] (1) Verify .NET 10 SDK is installed on the machine
-- [ ] (2) Validate `global.json` compatibility with .NET 10.0 (if present)
+- [?] (2) Validate `global.json` compatibility with .NET 10.0 (if present)
 
 **Verification**: .NET 10 SDK available; no global.json conflicts
 
 ---
 
-### [ ] TASK-002: Update Target Frameworks to net10.0
+### [?] TASK-002: Update Target Frameworks to net10.0 *(Completed: 2026-02-22 15:03)*
 **Scope**: All 4 projects
 **References**: Plan §4.1–4.4
 
 **Actions:**
-- [ ] (1) Update `<TargetFramework>net6.0</TargetFramework>` ? `<TargetFramework>net10.0</TargetFramework>` in `Domaine\Domaine.csproj`
-- [ ] (2) Update `<TargetFramework>net6.0</TargetFramework>` ? `<TargetFramework>net10.0</TargetFramework>` in `Infrastructure\Infrastructure.csproj`
-- [ ] (3) Update `<TargetFramework>net6.0</TargetFramework>` ? `<TargetFramework>net10.0</TargetFramework>` in `Services\Services.csproj`
-- [ ] (4) Update `<TargetFramework>net6.0</TargetFramework>` ? `<TargetFramework>net10.0</TargetFramework>` in `HermesEyes.com\HermesEyes.com.csproj`
+- [?] (1) Update `<TargetFramework>net6.0</TargetFramework>` ? `<TargetFramework>net10.0</TargetFramework>` in `Domaine\Domaine.csproj`
+- [?] (2) Update `<TargetFramework>net6.0</TargetFramework>` ? `<TargetFramework>net10.0</TargetFramework>` in `Infrastructure\Infrastructure.csproj`
+- [?] (3) Update `<TargetFramework>net6.0</TargetFramework>` ? `<TargetFramework>net10.0</TargetFramework>` in `Services\Services.csproj`
+- [?] (4) Update `<TargetFramework>net6.0</TargetFramework>` ? `<TargetFramework>net10.0</TargetFramework>` in `HermesEyes.com\HermesEyes.com.csproj`
 
 **Verification**: All 4 .csproj files contain `<TargetFramework>net10.0</TargetFramework>`
 
 ---
 
-### [ ] TASK-003: Update NuGet Packages
+### [?] TASK-003: Update NuGet Packages
 **Scope**: All 4 projects
 **References**: Plan §5
 
