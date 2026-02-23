@@ -66,7 +66,6 @@ builder.Services.AddRazorPages();
 
 // Learn more about configuring OpenAPI at https://learn.microsoft.com/aspnet/core/fundamentals/openapi
 builder.Services.AddOpenApi();
-builder.WebHost.UseUrls("https://localhost:3001", "http://localhost:3000");
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
