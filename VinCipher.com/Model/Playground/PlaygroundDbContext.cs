@@ -12,6 +12,7 @@ public class PlaygroundDbContext : DbContext
     public DbSet<PlaygroundApiToken> ApiTokens => Set<PlaygroundApiToken>();
     public DbSet<RequestLog> RequestLogs => Set<RequestLog>();
     public DbSet<AdminUser> AdminUsers => Set<AdminUser>();
+    public DbSet<AccessRequest> AccessRequests => Set<AccessRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -42,6 +43,12 @@ public class PlaygroundDbContext : DbContext
         modelBuilder.Entity<AdminUser>(e =>
         {
             e.HasIndex(a => a.Username).IsUnique();
+        });
+
+        modelBuilder.Entity<AccessRequest>(e =>
+        {
+            e.HasIndex(r => r.Email);
+            e.HasIndex(r => r.Status);
         });
     }
 }

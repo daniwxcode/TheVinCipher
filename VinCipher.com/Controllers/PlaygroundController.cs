@@ -61,65 +61,52 @@ public class PlaygroundController : ControllerBase
     }
 
     /// <summary>
-    /// Creates a playground account with a first API token (valid 1 day / 50 requests).
+    /// Submits an access request for review by an admin.
     /// </summary>
-    [HttpPost("register")]
-    public async Task<ActionResult> Register(
-        [FromBody] RegisterRequest request,
+    [HttpPost("request-access")]
+    public async Task<ActionResult> RequestAccess(
+        [FromBody] AccessRequestDto request,
         [FromQuery(Name = "t")] long timestamp,
         [FromQuery(Name = "s")] string signature)
     {
-        if (!_challenge.Verify("register", timestamp, signature ?? ""))
+        if (!_challenge.Verify("request-access", timestamp, signature ?? ""))
             return StatusCode(403, new { error = "Signature invalide" });
 
         if (string.IsNullOrWhiteSpace(request.Name) || string.IsNullOrWhiteSpace(request.Email))
             return BadRequest(new { error = "Nom et email requis." });
 
-        var existing = await _pgDb.Accounts.FirstOrDefaultAsync(a => a.Email == request.Email);
-        if (existing is not null)
-        {
-            var existingToken = await _pgDb.ApiTokens
-                .Where(t => t.AccountId == existing.Id && t.IsActive)
-                .OrderByDescending(t => t.CreatedAtUtc)
-                .FirstOrDefaultAsync();
+        if (string.IsNullOrWhiteSpace(request.Reason))
+            return BadRequest(new { error = "Veuillez expliquer pourquoi vous souhaitez acc\u00e9der \u00e0 l\u2019API." });
 
-            return Ok(new
-            {
-                accountId = existing.Id,
-                name = existing.Name,
-                token = existingToken?.Key,
-                expiresAt = existingToken?.ExpiresAtUtc,
-                message = "Compte existant retrouvé."
-            });
-        }
+        var existingAccount = await _pgDb.Accounts.AnyAsync(a => a.Email == request.Email);
+        if (existingAccount)
+            return Conflict(new { error = "Un compte avec cet email existe d\u00e9j\u00e0." });
 
-        var account = new PlaygroundAccount
+        var pendingRequest = await _pgDb.AccessRequests
+            .AnyAsync(r => r.Email == request.Email && r.Status == "pending");
+        if (pendingRequest)
+            return Conflict(new { error = "Une demande est d\u00e9j\u00e0 en cours de traitement pour cet email." });
+
+        var accessRequest = new AccessRequest
         {
             Id = Guid.NewGuid(),
             Name = request.Name,
             Email = request.Email,
             Phone = $"{request.PhoneCode}{request.PhoneNumber}",
             PhoneCode = request.PhoneCode ?? "",
-            Domain = request.Domain ?? ""
+            Domain = request.Domain ?? "",
+            Reason = request.Reason
         };
 
-        var apiToken = CreateApiToken(account.Id, "Clé par défaut");
-
-        _pgDb.Accounts.Add(account);
-        _pgDb.ApiTokens.Add(apiToken);
+        _pgDb.AccessRequests.Add(accessRequest);
         await _pgDb.SaveChangesAsync();
 
-        _tokensProvider.AddPlaygroundToken(apiToken.Key, apiToken.ExpiresAtUtc);
-
-        _logger.LogInformation("Playground account created: {Email}", account.Email);
+        _logger.LogInformation("Access request submitted: {Email}", accessRequest.Email);
 
         return Ok(new
         {
-            accountId = account.Id,
-            name = account.Name,
-            token = apiToken.Key,
-            expiresAt = apiToken.ExpiresAtUtc,
-            maxRequests = 50
+            message = "Votre demande a \u00e9t\u00e9 enregistr\u00e9e. Un administrateur l\u2019examinera sous peu.",
+            requestId = accessRequest.Id
         });
     }
 
@@ -265,57 +252,6 @@ public class PlaygroundController : ControllerBase
     }
 
     /// <summary>
-    /// Generates a new API token for the authenticated account (valid 1 day / 50 requests).
-    /// </summary>
-    [HttpPost("generate-token")]
-    public async Task<ActionResult> GenerateToken()
-    {
-        var (account, error) = await AuthenticateAsync();
-        if (account is null) return error!;
-
-        var activeCount = await _pgDb.ApiTokens.CountAsync(t => t.AccountId == account.Id && t.IsActive);
-        if (activeCount >= 5)
-            return BadRequest(new { error = "Maximum 5 tokens actifs par compte." });
-
-        var apiToken = CreateApiToken(account.Id, $"Clé #{activeCount + 1}");
-        _pgDb.ApiTokens.Add(apiToken);
-        await _pgDb.SaveChangesAsync();
-
-        _tokensProvider.AddPlaygroundToken(apiToken.Key, apiToken.ExpiresAtUtc);
-
-        return Ok(new
-        {
-            id = apiToken.Id,
-            token = apiToken.Key,
-            name = apiToken.Name,
-            expiresAt = apiToken.ExpiresAtUtc,
-            maxRequests = 50
-        });
-    }
-
-    /// <summary>
-    /// Revokes a token by ID.
-    /// </summary>
-    [HttpPost("revoke-token/{tokenId:guid}")]
-    public async Task<ActionResult> RevokeToken(Guid tokenId)
-    {
-        var (account, error) = await AuthenticateAsync();
-        if (account is null) return error!;
-
-        var token = await _pgDb.ApiTokens
-            .FirstOrDefaultAsync(t => t.Id == tokenId && t.AccountId == account.Id && t.IsActive);
-
-        if (token is null)
-            return NotFound(new { error = "Token non trouvé." });
-
-        token.IsActive = false;
-        token.RevokedAtUtc = DateTime.UtcNow;
-        await _pgDb.SaveChangesAsync();
-
-        return Ok(new { message = "Token révoqué." });
-    }
-
-    /// <summary>
     /// Decodes a VIN after verifying the HMAC challenge signature.
     /// Logs the request result.
     /// </summary>
@@ -434,18 +370,6 @@ public class PlaygroundController : ControllerBase
         return (token.Account, null);
     }
 
-    private static PlaygroundApiToken CreateApiToken(Guid accountId, string name)
-    {
-        return new PlaygroundApiToken
-        {
-            Id = Guid.NewGuid(),
-            AccountId = accountId,
-            Key = $"PG-{Convert.ToHexString(RandomNumberGenerator.GetBytes(20))}",
-            Name = name,
-            ExpiresAtUtc = DateTime.UtcNow.AddDays(1)
-        };
-    }
-
     private string GetClientIp()
     {
         var forwarded = Request.Headers["X-Forwarded-For"].FirstOrDefault();
@@ -465,5 +389,5 @@ public class PlaygroundController : ControllerBase
     }
 }
 
-public record RegisterRequest(string Name, string Email, string? PhoneCode, string? PhoneNumber, string? Domain);
+public record AccessRequestDto(string Name, string Email, string? PhoneCode, string? PhoneNumber, string? Domain, string Reason);
 public record LoginRequest(string Token);

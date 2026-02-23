@@ -39,11 +39,16 @@
     <div class="stats-grid" id="statsGrid"></div>
     <div class="tabs">
         <button class="tab active" data-tab="accounts" onclick="Admin.switchTab('accounts')">Comptes</button>
+        <button class="tab" data-tab="requests" onclick="Admin.switchTab('requests')">Demandes d&#39;acc&egrave;s</button>
         <button class="tab" data-tab="admins" onclick="Admin.switchTab('admins')">Administrateurs</button>
     </div>
     <div id="tab-accounts">
         <div id="accountsList"></div>
         <div id="accountDetail" class="hidden"></div>
+    </div>
+    <div id="tab-requests" class="hidden">
+        <div class="section-title">Demandes d&#39;acc&egrave;s &agrave; l&#39;API</div>
+        <div id="requestsList"></div>
     </div>
     <div id="tab-admins" class="hidden">
         <div class="section-title">

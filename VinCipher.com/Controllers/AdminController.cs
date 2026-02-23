@@ -154,6 +154,21 @@ public class AdminController : ControllerBase
 
         var totalRequests = await _db.RequestLogs.CountAsync(r => tokenIds.Contains(r.TokenId));
 
+        var logsQuery = _db.RequestLogs.Where(r => tokenIds.Contains(r.TokenId));
+        var today = DateTime.UtcNow.Date;
+        var todayRequests = await logsQuery.CountAsync(r => r.TimestampUtc >= today);
+        var successCount = await logsQuery.CountAsync(r => r.Success);
+        var uniqueVins = await logsQuery.Select(r => r.Vin).Distinct().CountAsync();
+        var avgResponseTime = totalRequests > 0
+            ? await logsQuery.AverageAsync(r => (double)r.ResponseTimeMs)
+            : 0;
+        var topVins = await logsQuery
+            .GroupBy(r => r.Vin)
+            .Select(g => new { vin = g.Key, count = g.Count(), lastQueried = g.Max(r => r.TimestampUtc) })
+            .OrderByDescending(g => g.count)
+            .Take(10)
+            .ToListAsync();
+
         return Ok(new
         {
             account = new
@@ -177,6 +192,17 @@ public class AdminController : ControllerBase
                 t.RevokedAtUtc
             }),
             totalRequests,
+            vinStats = new
+            {
+                totalRequests,
+                todayRequests,
+                successCount,
+                failureCount = totalRequests - successCount,
+                successRate = totalRequests > 0 ? Math.Round(100.0 * successCount / totalRequests, 1) : 0,
+                avgResponseTimeMs = Math.Round(avgResponseTime),
+                uniqueVins,
+                topVins
+            },
             recentLogs
         });
     }
@@ -404,8 +430,170 @@ public class AdminController : ControllerBase
             activeTokens = await _db.ApiTokens.CountAsync(t => t.IsActive && t.ExpiresAtUtc > DateTime.UtcNow),
             totalRequests = await _db.RequestLogs.CountAsync(),
             todayRequests = await _db.RequestLogs.CountAsync(r => r.TimestampUtc >= today),
-            totalAdmins = await _db.AdminUsers.CountAsync()
+            totalAdmins = await _db.AdminUsers.CountAsync(),
+            pendingRequests = await _db.AccessRequests.CountAsync(r => r.Status == "pending")
         });
+    }
+
+    // ??? Access requests management ?????????????????????????????????
+
+    /// <summary>
+    /// Lists all access requests, optionally filtered by status.
+    /// </summary>
+    [HttpGet("access-requests")]
+    public async Task<ActionResult> ListAccessRequests(
+        [FromQuery] string? status = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int size = 25)
+    {
+        var (admin, err) = await AuthenticateAdminAsync();
+        if (admin is null) return err!;
+
+        size = Math.Clamp(size, 1, 100);
+        page = Math.Max(page, 1);
+
+        var query = _db.AccessRequests.AsQueryable();
+        if (!string.IsNullOrWhiteSpace(status))
+            query = query.Where(r => r.Status == status);
+
+        var total = await query.CountAsync();
+        var requests = await query
+            .OrderByDescending(r => r.CreatedAtUtc)
+            .Skip((page - 1) * size)
+            .Take(size)
+            .Select(r => new
+            {
+                r.Id,
+                r.Name,
+                r.Email,
+                r.Phone,
+                r.Domain,
+                r.Reason,
+                r.Status,
+                r.CreatedAtUtc,
+                r.ReviewedAtUtc,
+                r.ReviewedBy,
+                r.AccountId
+            })
+            .ToListAsync();
+
+        return Ok(new { total, page, size, requests });
+    }
+
+    /// <summary>
+    /// Returns full details for a single access request.
+    /// </summary>
+    [HttpGet("access-requests/{requestId:guid}")]
+    public async Task<ActionResult> GetAccessRequest(Guid requestId)
+    {
+        var (admin, err) = await AuthenticateAdminAsync();
+        if (admin is null) return err!;
+
+        var request = await _db.AccessRequests.FindAsync(requestId);
+        if (request is null)
+            return NotFound(new { error = "Demande non trouv\u00e9e." });
+
+        return Ok(new
+        {
+            request.Id,
+            request.Name,
+            request.Email,
+            request.Phone,
+            request.PhoneCode,
+            request.Domain,
+            request.Reason,
+            request.Status,
+            request.CreatedAtUtc,
+            request.ReviewedAtUtc,
+            request.ReviewedBy,
+            request.AccountId
+        });
+    }
+
+    /// <summary>
+    /// Approves an access request: creates an account and a first API token.
+    /// </summary>
+    [HttpPost("access-requests/{requestId:guid}/approve")]
+    public async Task<ActionResult> ApproveAccessRequest(Guid requestId, [FromBody] AdminApproveRequestDto? dto)
+    {
+        var (admin, err) = await AuthenticateAdminAsync();
+        if (admin is null) return err!;
+
+        var request = await _db.AccessRequests.FindAsync(requestId);
+        if (request is null)
+            return NotFound(new { error = "Demande non trouv\u00e9e." });
+
+        if (request.Status != "pending")
+            return BadRequest(new { error = $"Cette demande est d\u00e9j\u00e0 {request.Status}." });
+
+        var account = new PlaygroundAccount
+        {
+            Id = Guid.NewGuid(),
+            Name = request.Name,
+            Email = request.Email,
+            Phone = request.Phone,
+            PhoneCode = request.PhoneCode,
+            Domain = request.Domain
+        };
+
+        var durationDays = dto?.DurationDays > 0 ? dto.DurationDays : 30;
+        var apiToken = new PlaygroundApiToken
+        {
+            Id = Guid.NewGuid(),
+            AccountId = account.Id,
+            Key = $"PG-{Convert.ToHexString(RandomNumberGenerator.GetBytes(20))}",
+            Name = "Cl\u00e9 initiale",
+            ExpiresAtUtc = DateTime.UtcNow.AddDays(durationDays)
+        };
+
+        request.Status = "approved";
+        request.ReviewedAtUtc = DateTime.UtcNow;
+        request.ReviewedBy = admin.Username;
+        request.AccountId = account.Id;
+
+        _db.Accounts.Add(account);
+        _db.ApiTokens.Add(apiToken);
+        await _db.SaveChangesAsync();
+
+        _tokensProvider.AddPlaygroundToken(apiToken.Key, apiToken.ExpiresAtUtc);
+
+        _logger.LogInformation("Admin {Admin} approved access request {RequestId} for {Email}, account {AccountId}",
+            admin.Username, requestId, request.Email, account.Id);
+
+        return Ok(new
+        {
+            message = $"Demande approuv\u00e9e. Compte cr\u00e9\u00e9 pour {request.Email}.",
+            accountId = account.Id,
+            tokenKey = apiToken.Key,
+            expiresAt = apiToken.ExpiresAtUtc
+        });
+    }
+
+    /// <summary>
+    /// Rejects an access request.
+    /// </summary>
+    [HttpPost("access-requests/{requestId:guid}/reject")]
+    public async Task<ActionResult> RejectAccessRequest(Guid requestId)
+    {
+        var (admin, err) = await AuthenticateAdminAsync();
+        if (admin is null) return err!;
+
+        var request = await _db.AccessRequests.FindAsync(requestId);
+        if (request is null)
+            return NotFound(new { error = "Demande non trouv\u00e9e." });
+
+        if (request.Status != "pending")
+            return BadRequest(new { error = $"Cette demande est d\u00e9j\u00e0 {request.Status}." });
+
+        request.Status = "rejected";
+        request.ReviewedAtUtc = DateTime.UtcNow;
+        request.ReviewedBy = admin.Username;
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Admin {Admin} rejected access request {RequestId} for {Email}",
+            admin.Username, requestId, request.Email);
+
+        return Ok(new { message = $"Demande de {request.Email} refus\u00e9e." });
     }
 
     // ??? Helpers ????????????????????????????????????????????????????
@@ -428,3 +616,4 @@ public record AdminLoginRequest(string Username, string Password);
 public record AdminCreateRequest(string Username, string Password);
 public record AdminCreateTokenRequest(string? Name, int DurationDays);
 public record AdminExtendTokenRequest(int AdditionalDays);
+public record AdminApproveRequestDto(int DurationDays);

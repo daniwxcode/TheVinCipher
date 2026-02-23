@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <Compile Remove="Controllers\BackGroundTAsk.cs" />
+    <Compile Remove="Controllers\MarketValueController.cs" />
     <Compile Remove="Controllers\oMarketValueController.cs" />
     <Compile Remove="Controllers\USVinDecoderController.cs" />
   </ItemGroup>

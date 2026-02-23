@@ -118,3 +118,45 @@ public class AdminUser
         return CryptographicOperations.FixedTimeEquals(storedHash, computedHash);
     }
 }
+
+public class AccessRequest
+{
+    [Key]
+    public Guid Id { get; set; }
+
+    [Required, MaxLength(120)]
+    public string Name { get; set; } = "";
+
+    [Required, MaxLength(200)]
+    public string Email { get; set; } = "";
+
+    [MaxLength(30)]
+    public string Phone { get; set; } = "";
+
+    [MaxLength(10)]
+    public string PhoneCode { get; set; } = "";
+
+    [MaxLength(60)]
+    public string Domain { get; set; } = "";
+
+    [Required, MaxLength(1000)]
+    public string Reason { get; set; } = "";
+
+    /// <summary>
+    /// pending | approved | rejected
+    /// </summary>
+    [MaxLength(20)]
+    public string Status { get; set; } = "pending";
+
+    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+
+    public DateTime? ReviewedAtUtc { get; set; }
+
+    [MaxLength(80)]
+    public string? ReviewedBy { get; set; }
+
+    /// <summary>
+    /// Account ID created upon approval (null if pending/rejected).
+    /// </summary>
+    public Guid? AccountId { get; set; }
+}
