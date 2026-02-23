@@ -1,0 +1,64 @@
+@page
+@model AdminModel
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VinCipher Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="~/css/admin.min.css">
+</head>
+<body>
+
+<div id="loginScreen" class="login-box">
+    <h2>&#128274; VinCipher Admin</h2>
+    <form onsubmit="return Admin.login(event)">
+        <div class="form-group">
+            <label class="form-label">Username</label>
+            <input class="form-input" type="text" id="loginUser" required autocomplete="username">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Password</label>
+            <input class="form-input" type="password" id="loginPass" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;margin-top:8px">Connexion</button>
+        <div class="error-msg" id="loginError"></div>
+    </form>
+</div>
+
+<div id="mainApp" class="app hidden">
+    <div class="header">
+        <h1>VinCipher <span>Admin</span></h1>
+        <div class="header-actions">
+            <span class="badge" id="adminBadge"></span>
+            <button class="btn btn-ghost btn-sm" onclick="Admin.logout()">D&eacute;connexion</button>
+        </div>
+    </div>
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="tabs">
+        <button class="tab active" data-tab="accounts" onclick="Admin.switchTab('accounts')">Comptes</button>
+        <button class="tab" data-tab="admins" onclick="Admin.switchTab('admins')">Administrateurs</button>
+    </div>
+    <div id="tab-accounts">
+        <div id="accountsList"></div>
+        <div id="accountDetail" class="hidden"></div>
+    </div>
+    <div id="tab-admins" class="hidden">
+        <div class="section-title">
+            Utilisateurs administrateurs
+            <button class="btn btn-primary btn-sm" id="btnCreateAdmin" onclick="Admin.showCreateAdmin()">+ Nouvel admin</button>
+        </div>
+        <div id="adminsList"></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal">
+    <div class="modal" id="modalContent"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="~/js/admin.min.js"></script>
+</body>
+</html>

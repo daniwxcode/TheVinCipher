@@ -61,6 +61,7 @@ builder.Services.AddSingleton(_ =>
 });
 
 builder.Services.AddControllers();
+builder.Services.AddRazorPages();
 
 // Learn more about configuring OpenAPI at https://learn.microsoft.com/aspnet/core/fundamentals/openapi
 builder.Services.AddOpenApi();
@@ -110,23 +111,23 @@ using (var scope = app.Services.CreateScope())
 
 app.UseHttpsRedirection();
 
-app.UseDefaultFiles();
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
     {
+        // Block direct access to any remaining .html files in wwwroot
         if (ctx.File.Name.EndsWith(".html"))
         {
-            ctx.Context.Response.ContentType = "text/html; charset=utf-8";
-            ctx.Context.Response.Headers.CacheControl = "no-cache, no-store, must-revalidate";
-            ctx.Context.Response.Headers.Pragma = "no-cache";
-            ctx.Context.Response.Headers.Expires = "0";
+            ctx.Context.Response.StatusCode = 404;
+            ctx.Context.Response.ContentLength = 0;
+            ctx.Context.Response.Body = Stream.Null;
         }
     }
 });
 
 app.UseAuthorization();
 
+app.MapRazorPages();
 app.MapControllers();
 
 app.Run();
