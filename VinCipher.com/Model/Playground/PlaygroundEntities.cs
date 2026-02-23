@@ -43,6 +43,11 @@ public class PlaygroundApiToken
 
     public bool IsActive { get; set; } = true;
 
+    /// <summary>
+    /// Maximum decode requests per day for this token. 0 = unlimited.
+    /// </summary>
+    public int DailyLimit { get; set; } = 50;
+
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 
     public DateTime ExpiresAtUtc { get; set; }

@@ -1,60 +1,62 @@
-﻿using Domaine.Entities.VinCipher;
+﻿using System.Collections.Frozen;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 using Flurl.Http;
 
-using Infrastructure.Contexts;
-
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 using Services.DataServices;
 using Services.Interfaces;
 
-using System.Text.RegularExpressions;
-
 using VinCipher.Model;
+using VinCipher.Model.Playground;
 
 namespace VinCipher.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class VinDecoderController : ControllerBase
+public partial class VinDecoderController : ControllerBase
 {
-    private readonly VinRushScrapper vinRushScrapper;
-    private readonly TokensProvider tokenProvider;
-    private readonly VinCipherContext _context;
-    private readonly ICrudServices _requestsbase;
+    private readonly VinRushScrapper _scrapper;
+    private readonly TokensProvider _tokenProvider;
+    private readonly ICrudServices _requestsBase;
     private readonly VinDecoderRateLimiter _rateLimiter;
-    public VinDecoderController(TokensProvider tokensProvider, VinRushScrapper vinRushScrapper, VinCipherContext context, ICrudServices crudServices, VinDecoderRateLimiter rateLimiter)
-    {
-        this.vinRushScrapper = vinRushScrapper;
-        tokenProvider = tokensProvider;
-        _context = context;
-        _requestsbase = crudServices;
-        _rateLimiter = rateLimiter;
-    }
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="token"></param>
-    /// <param name="vin"></param>
-    /// <returns>Dictionary if OK code 200</returns>
-    /// <returns>Bad Request</returns>
-    /// <returns>Unauthorize</returns>
-    /// <returns>NotFound</returns>
-    [HttpGet()]
-    [HttpPost]
+    private readonly VinDecodeCache _vinCache;
+    private readonly PlaygroundDbContext? _pgDb;
 
+    public VinDecoderController(
+        TokensProvider tokensProvider,
+        VinRushScrapper vinRushScrapper,
+        ICrudServices crudServices,
+        VinDecoderRateLimiter rateLimiter,
+        VinDecodeCache vinCache,
+        PlaygroundDbContext? pgDb = null)
+    {
+        _scrapper = vinRushScrapper;
+        _tokenProvider = tokensProvider;
+        _requestsBase = crudServices;
+        _rateLimiter = rateLimiter;
+        _vinCache = vinCache;
+        _pgDb = pgDb;
+    }
+
+    /// <summary>
+    /// Decodes a VIN and returns vehicle specifications.
+    /// Uses in-memory cache (24h) to avoid redundant scraping.
+    /// </summary>
+    [HttpGet]
+    [HttpPost]
     public async Task<ActionResult<Dictionary<string, string>>> Decode(string token, string vin)
     {
-
-        if (!tokenProvider.IsValid(token, out var tokenInfo)
-            || !tokenInfo.IsFunctionAllowed(AllowedFunction.Decode)
-            )
+        if (!_tokenProvider.IsValid(token, out var tokenInfo)
+            || !tokenInfo.IsFunctionAllowed(AllowedFunction.Decode))
         {
             return Unauthorized(new MarketValueResponse("Token Invalid"));
         }
 
-        var (allowed, remainingDaily, retryAfter) = _rateLimiter.TryAcquire(token);
+        var (allowed, _, retryAfter) = _rateLimiter.TryAcquire(token);
         if (!allowed)
         {
             Response.Headers["Retry-After"] = retryAfter.ToString();
@@ -62,172 +64,175 @@ public class VinDecoderController : ControllerBase
                 new { message = "Daily limit of 50 decode requests reached.", retryAfterSeconds = retryAfter });
         }
 
-        if (vin.Contains("O") || vin.Contains("Q") || vin.Contains("I"))
+        if (vin.Contains('O') || vin.Contains('Q') || vin.Contains('I'))
         {
-            var message = $"Vin Incorect: {vin}";
-            await _requestsbase.Ajouter(message);
-            return BadRequest(message);
-        }
-        try
-        {
-            var existingCar = _context.VinCipherCars.FirstOrDefault(c => c.VIN == vin);
-
-            if (existingCar != null)
-            {
-                return Ok(existingCar.DecodedValues);
-            }
-        }
-        catch (Exception)
-        {
-
+            await _requestsBase.Ajouter($"Vin Incorect: {vin}");
+            return BadRequest($"Vin Incorect: {vin}");
         }
 
-        vinRushScrapper.Vin = vin;
-        var result = await vinRushScrapper.IdentifyCarByVINAsync(vin);
-        result.TryAdd("model_year", vin.GetModelYear().ToString());
-        if (result.Count <= 17)
-        {
-            result = await RequestUsBase(vin);
-            result = DecodingParser(result);
-            if (result.Count < 17)
-            {
-                result = await vinRushScrapper.IdentifyCarByVINAsync(vin, 1);
-                result = DecodingParser(result);
-                if (result.Count > 17)
-                    return Ok(result);
+        var startTime = Stopwatch.GetTimestamp();
 
-                await _requestsbase.Ajouter(vin);
-                return NotFound(result);
-            }
+        // Return cached result if available (24h TTL)
+        ActionResult<Dictionary<string, string>> result;
+        if (_vinCache.TryGet(vin, out var cachedResult))
+            result = Ok(cachedResult);
+        else
+            result = await ScrapeAndCacheAsync(vin);
 
+        var elapsedMs = (int)Stopwatch.GetElapsedTime(startTime).TotalMilliseconds;
+        await LogRequestAsync(token, vin, result, elapsedMs);
 
-        }
-        var hermescar = new VinCipherCar(result, vin);
-        try
-        {
-            await _context.VinCipherCars.AddAsync(hermescar);
-            await _context.SaveChangesAsync();
-        }
-        catch (Exception)
-        {
-
-        }
-        result.Remove("Base Price");
-        return Ok(result);
-
+        return result;
     }
 
-    private async Task<Dictionary<string, string>> RequestUsBase(string vin)
+    /// <summary>
+    /// Logs the request to PlaygroundDbContext if the token maps to a playground API token.
+    /// Skipped when pgDb is null (i.e. when called from PlaygroundController which has its own logging).
+    /// </summary>
+    private async Task LogRequestAsync(string token, string vin, ActionResult<Dictionary<string, string>> result, int elapsedMs)
     {
+        if (_pgDb is null) return;
 
-        var url = $"https://vpic.nhtsa.dot.gov/api/vehicles/decodevinextended/{vin}?format=json";
-        var response = new Dictionary<string, string>();
-        var result = await url.GetJsonAsync<VinDecodeRoot>();
-        var res = result.Results.Where(i => i.Value != null).Select(r => new
+        var apiToken = await _pgDb.ApiTokens
+            .FirstOrDefaultAsync(t => t.Key == token && t.IsActive);
+
+        if (apiToken is null) return;
+
+        var statusCode = result.Result switch
         {
-            label = Regex.Replace(r.Variable, @"[^0-9a-zA-Z:, /]+", "").Trim(),
-            value = r.Value,
-        }).ToList();
-        foreach (var item in res)
+            OkObjectResult => 200,
+            BadRequestObjectResult => 400,
+            NotFoundObjectResult => 404,
+            ObjectResult obj => obj.StatusCode ?? 500,
+            _ => 200
+        };
+
+        _pgDb.RequestLogs.Add(new RequestLog
         {
-            response.TryAdd(item.label, item.value);
+            TokenId = apiToken.Id,
+            Vin = vin,
+            StatusCode = statusCode,
+            Success = statusCode is >= 200 and < 300,
+            ResponseTimeMs = elapsedMs
+        });
+
+        await _pgDb.SaveChangesAsync();
+    }
+
+    private async Task<ActionResult<Dictionary<string, string>>> ScrapeAndCacheAsync(string vin)
+    {
+        _scrapper.Vin = vin;
+        var result = await _scrapper.IdentifyCarByVINAsync(vin);
+        result.TryAdd("model_year", vin.GetModelYear().ToString());
+
+        if (result.Count <= 17)
+        {
+            result = await RequestUsBaseAsync(vin);
+            ParseAndClean(result);
+
+            if (result.Count < 17)
+            {
+                result = await _scrapper.IdentifyCarByVINAsync(vin, 1);
+                ParseAndClean(result);
+
+                if (result.Count > 17)
+                {
+                    _vinCache.Set(vin, result);
+                    return Ok(result);
+                }
+
+                await _requestsBase.Ajouter(vin);
+                return NotFound(result);
+            }
         }
+
+        result.Remove("Base Price");
+        _vinCache.Set(vin, result);
+        return Ok(result);
+    }
+
+    private static async Task<Dictionary<string, string>> RequestUsBaseAsync(string vin)
+    {
+        var url = $"https://vpic.nhtsa.dot.gov/api/vehicles/decodevinextended/{vin}?format=json";
+        var decoded = await url.GetJsonAsync<VinDecodeRoot>();
+
+        var response = new Dictionary<string, string>(decoded.Results.Count);
+        foreach (var r in decoded.Results)
+        {
+            if (r.Value is null) continue;
+            var label = NonAlphaNumRegex().Replace(r.Variable, "").Trim();
+            response.TryAdd(label, r.Value);
+        }
+
         return response;
     }
 
-    private Dictionary<string, string> DecodingParser(Dictionary<string, string> result)
+    private static void ParseAndClean(Dictionary<string, string> result)
     {
-        foreach (var pair in result)
-        {
-            if (pair.Value == "Not Applicable")
-            {
-                result.Remove(pair.Key);
+        var keysToRemove = result
+            .Where(p => p.Value == "Not Applicable" || BadLabels.Contains(p.Key))
+            .Select(p => p.Key)
+            .ToList();
 
-            }
+        foreach (var key in keysToRemove)
+            result.Remove(key);
+
+        foreach (var (originalKey, goodKey) in RenameMap)
+        {
+            if (result.Remove(originalKey, out var value))
+                result[goodKey] = value;
         }
 
-        foreach (var label in badlabels)
+        foreach (var key in result.Keys.ToList())
         {
-            result.Remove(label);
-        }
-        foreach (var tuple in goodLabels)
-        {
-            RenameKey(result, tuple.toremane, tuple.good);
-        }
-        foreach (var item in result.Keys)
-        {
-            var tmp = result[item].Split('/');
-            if (tmp.Length > 1)
-            {
-                result[item] = tmp[0];
-            }
+            var slashIndex = result[key].IndexOf('/');
+            if (slashIndex >= 0)
+                result[key] = result[key][..slashIndex];
         }
 
         result.Remove("notea");
         result.Remove("adress_line_1");
         result.Remove("adress_line_2");
-        return result;
     }
 
-    private readonly List<string> badlabels = new()
-    {
-         "Suggested VIN",
-         "Error Code",
-         "Possible Values",
-         "Error Text",
-         "NCSA Make",
-         "NCSA Model",
-         "Lane Departure Warning LDW",
-         "Base Price",
-         "Additional Error Text",
-         "Motorcycle Chassis Type",
-         "image",
-         "exec"
+    [GeneratedRegex(@"[^0-9a-zA-Z:, /]+")]
+    private static partial Regex NonAlphaNumRegex();
 
+    private static readonly FrozenSet<string> BadLabels = FrozenSet.ToFrozenSet(
+    [
+        "Suggested VIN", "Error Code", "Possible Values", "Error Text",
+        "NCSA Make", "NCSA Model", "Lane Departure Warning LDW", "Base Price",
+        "Additional Error Text", "Motorcycle Chassis Type", "image", "exec"
+    ]);
 
-    };
-    private readonly List<(string good, string toremane)> goodLabels = new()
-   {
-        ("make","Make"),
-        ("make","brand"),
-        ("model","Model"),
-        ("model_year","Model Year"),
-        ("model_year","year"),
-        ("trim_level","Trim"),
-        ("body_style","Body Class"),
-        ("fuel_type","Fuel Type  Primary"),
-        ("transmission","Transmission Style"),
-        ("manufactured_in","Plant City"),
-        ("manufacturer","Manufacturer Name"),
-        ("country","Plant Country"),
-        ("body_type","Body Class"),
-        ("number_of_doors","Doors"),
-        ("number_of_seats","Number of Seats"),
-        ("number_of_seats","number_of_seater"),
-        ("displacement_si","Displacement CC"),
-        ("displacement_nominal","Displacement L"),
-        ("engine_head","Engine Configuration"),
-        ("engine_cylinders","Engine Number of Cylinders"),
-        ("engine_horse_power","Engine Brake hp From"),
-        ("engine_kilo_watts","Engine Power kW"),
-        ("vehicule_type","Vehicle Type"),
-        ("driveline","Drive Type"),
-
-    };
-
-    private void RenameKey(Dictionary<string, string> dic,
-                                      string fromKey, string toKey)
-    {
-        try
+    /// <summary>
+    /// Maps original key → standardized key.
+    /// </summary>
+    private static readonly FrozenDictionary<string, string> RenameMap =
+        new Dictionary<string, string>
         {
-            var value = dic[fromKey];
-            dic.Remove(fromKey);
-            dic[toKey] = value;
-        }
-        catch (Exception)
-        {
-
-        }
-
-    }
+            ["Make"] = "make",
+            ["brand"] = "make",
+            ["Model"] = "model",
+            ["Model Year"] = "model_year",
+            ["year"] = "model_year",
+            ["Trim"] = "trim_level",
+            ["Body Class"] = "body_style",
+            ["Fuel Type  Primary"] = "fuel_type",
+            ["Transmission Style"] = "transmission",
+            ["Plant City"] = "manufactured_in",
+            ["Manufacturer Name"] = "manufacturer",
+            ["Plant Country"] = "country",
+            ["Doors"] = "number_of_doors",
+            ["Number of Seats"] = "number_of_seats",
+            ["number_of_seater"] = "number_of_seats",
+            ["Displacement CC"] = "displacement_si",
+            ["Displacement L"] = "displacement_nominal",
+            ["Engine Configuration"] = "engine_head",
+            ["Engine Number of Cylinders"] = "engine_cylinders",
+            ["Engine Brake hp From"] = "engine_horse_power",
+            ["Engine Power kW"] = "engine_kilo_watts",
+            ["Vehicle Type"] = "vehicule_type",
+            ["Drive Type"] = "driveline",
+        }.ToFrozenDictionary();
 }

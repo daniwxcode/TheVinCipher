@@ -29,6 +29,7 @@ public class PlaygroundController : ControllerBase
     private readonly PlaygroundChallenge _challenge;
     private readonly TokensProvider _tokensProvider;
     private readonly PlaygroundDbContext _pgDb;
+    private readonly VinDecodeCache _vinCache;
     private readonly int _previewFieldCount;
     private readonly ILogger<PlaygroundController> _logger;
 
@@ -40,22 +41,23 @@ public class PlaygroundController : ControllerBase
     public PlaygroundController(
         TokensProvider tokensProvider,
         VinRushScrapper vinRushScrapper,
-        Infrastructure.Contexts.VinCipherContext context,
         ICrudServices crudServices,
         IConfiguration configuration,
         PlaygroundRateLimiter rateLimiter,
         PlaygroundChallenge challenge,
         VinDecoderRateLimiter decoderRateLimiter,
         PlaygroundDbContext pgDb,
+        VinDecodeCache vinCache,
         ILogger<PlaygroundController> logger)
     {
-        _decoder = new VinDecoderController(tokensProvider, vinRushScrapper, context, crudServices, decoderRateLimiter);
+        _decoder = new VinDecoderController(tokensProvider, vinRushScrapper, crudServices, decoderRateLimiter, vinCache);
         _playgroundToken = configuration["PlaygroundToken"]
             ?? throw new InvalidOperationException("PlaygroundToken is not configured.");
         _rateLimiter = rateLimiter;
         _challenge = challenge;
         _tokensProvider = tokensProvider;
         _pgDb = pgDb;
+        _vinCache = vinCache;
         _previewFieldCount = configuration.GetValue("Playground:PreviewFieldCount", 6);
         _logger = logger;
     }
@@ -157,7 +159,8 @@ public class PlaygroundController : ControllerBase
                 active = t.IsActive,
                 createdAt = t.CreatedAtUtc,
                 expiresAt = t.ExpiresAtUtc,
-                revokedAt = t.RevokedAtUtc
+                revokedAt = t.RevokedAtUtc,
+                dailyLimit = t.DailyLimit
             })
             .ToListAsync();
 
@@ -220,11 +223,11 @@ public class PlaygroundController : ControllerBase
         var (account, error) = await AuthenticateAsync();
         if (account is null) return error!;
 
-        var tokenIds = await _pgDb.ApiTokens
+        var tokens = await _pgDb.ApiTokens
             .Where(t => t.AccountId == account.Id)
-            .Select(t => t.Id)
             .ToListAsync();
 
+        var tokenIds = tokens.Select(t => t.Id).ToList();
         var logs = _pgDb.RequestLogs.Where(r => tokenIds.Contains(r.TokenId));
 
         var today = DateTime.UtcNow.Date;
@@ -236,19 +239,113 @@ public class PlaygroundController : ControllerBase
             ? await logs.AverageAsync(r => (double)r.ResponseTimeMs)
             : 0;
 
-        var activeTokens = await _pgDb.ApiTokens.CountAsync(t => t.AccountId == account.Id && t.IsActive);
+        var activeTokens = tokens.Count(t => t.IsActive);
+        var totalDailyLimit = tokens.Where(t => t.IsActive).Sum(t => t.DailyLimit);
+        var remainingToday = totalDailyLimit > 0 ? Math.Max(0, totalDailyLimit - todayRequests) : -1;
 
         return Ok(new
         {
             totalRequests,
             todayRequests,
-            remainingToday = Math.Max(0, 50 - todayRequests),
+            dailyLimit = totalDailyLimit,
+            remainingToday,
             successCount,
             failureCount,
             successRate = totalRequests > 0 ? Math.Round(100.0 * successCount / totalRequests, 1) : 0,
             avgResponseTimeMs = Math.Round(avgResponseTime),
             activeTokens
         });
+    }
+
+    /// <summary>
+    /// Authenticated full decode — returns all fields, no preview truncation.
+    /// Rate-limited by the token's DailyLimit.
+    /// </summary>
+    [HttpGet("full-decode")]
+    public async Task<ActionResult<Dictionary<string, string>>> FullDecode([FromQuery] string vin)
+    {
+        if (string.IsNullOrWhiteSpace(vin))
+            return BadRequest(new { error = "Le VIN est requis." });
+
+        var apiKey = Request.Headers["X-Api-Key"].FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(apiKey))
+            return Unauthorized(new { error = "Header X-Api-Key requis." });
+
+        var token = await _pgDb.ApiTokens
+            .Include(t => t.Account)
+            .FirstOrDefaultAsync(t => t.Key == apiKey && t.IsActive);
+
+        if (token is null || token.ExpiresAtUtc < DateTime.UtcNow)
+            return Unauthorized(new { error = "Token invalide ou expiré." });
+
+        // Per-token daily limit check
+        var today = DateTime.UtcNow.Date;
+        var todayCount = await _pgDb.RequestLogs
+            .CountAsync(r => r.TokenId == token.Id && r.TimestampUtc >= today);
+
+        var limit = token.DailyLimit;
+        var remaining = limit > 0 ? Math.Max(0, limit - todayCount) : -1;
+
+        if (limit > 0 && todayCount >= limit)
+        {
+            Response.Headers["X-RateLimit-Remaining"] = "0";
+            return StatusCode(429, new
+            {
+                error = "Limite journalière atteinte",
+                message = $"Vous avez utilisé {todayCount}/{limit} requêtes aujourd'hui.",
+                dailyLimit = limit,
+                todayCount,
+                remaining = 0
+            });
+        }
+
+        var startTime = Stopwatch.GetTimestamp();
+
+        Dictionary<string, string>? data = null;
+        if (_vinCache.TryGet(vin, out var cached))
+            data = cached;
+
+        var result = data is not null
+            ? new ActionResult<Dictionary<string, string>>(Ok(data))
+            : await _decoder.Decode(_playgroundToken, vin);
+
+        var elapsed = (int)Stopwatch.GetElapsedTime(startTime).TotalMilliseconds;
+
+        // Log request
+        var statusCode = result.Result switch
+        {
+            OkObjectResult => 200,
+            BadRequestObjectResult => 400,
+            NotFoundObjectResult => 404,
+            ObjectResult obj => obj.StatusCode ?? 500,
+            _ => 200
+        };
+
+        _pgDb.RequestLogs.Add(new RequestLog
+        {
+            TokenId = token.Id,
+            Vin = vin,
+            StatusCode = statusCode,
+            Success = statusCode is >= 200 and < 300,
+            ResponseTimeMs = elapsed
+        });
+        await _pgDb.SaveChangesAsync();
+
+        if (result.Result is OkObjectResult ok && ok.Value is Dictionary<string, string> fullData)
+        {
+            if (data is null)
+                _vinCache.Set(vin, fullData);
+
+            var newRemaining = limit > 0 ? Math.Max(0, limit - todayCount - 1) : -1;
+            Response.Headers["X-RateLimit-Remaining"] = newRemaining.ToString();
+
+            fullData["_remaining"] = newRemaining.ToString();
+            fullData["_dailyLimit"] = limit.ToString();
+            fullData["_responseTimeMs"] = elapsed.ToString();
+            return Ok(fullData);
+        }
+
+        return result;
     }
 
     /// <summary>
@@ -289,11 +386,19 @@ public class PlaygroundController : ControllerBase
 
         var startTime = Stopwatch.GetTimestamp();
 
-        var result = await _decoder.Decode(_playgroundToken, vin);
+        // Check 24h in-memory cache first
+        Dictionary<string, string>? cachedData = null;
+        if (_vinCache.TryGet(vin, out var cached))
+        {
+            cachedData = cached;
+        }
+
+        var result = cachedData is not null
+            ? new ActionResult<Dictionary<string, string>>(Ok(cachedData))
+            : await _decoder.Decode(_playgroundToken, vin);
 
         var elapsed = (int)Stopwatch.GetElapsedTime(startTime).TotalMilliseconds;
 
-        // Log request if caller has X-Api-Key
         await LogRequestAsync(vin, result, elapsed);
 
         if (result.Result is OkObjectResult ok && ok.Value is Dictionary<string, string> fullData)
@@ -318,6 +423,10 @@ public class PlaygroundController : ControllerBase
             if (hiddenCount > 0)
                 preview["_demo"] = $"Aperçu limité — {hiddenCount} champs masqués. Souscrivez pour l\u2019accès complet.";
 
+            // Cache the full decode result for 24h
+            if (cachedData is null)
+                _vinCache.Set(vin, fullData);
+
             preview["_remaining"] = remainingDaily.ToString();
             return Ok(preview);
         }
@@ -327,12 +436,6 @@ public class PlaygroundController : ControllerBase
 
     private async Task LogRequestAsync(string vin, ActionResult<Dictionary<string, string>> result, int elapsedMs)
     {
-        var apiKey = Request.Headers["X-Api-Key"].FirstOrDefault();
-        if (string.IsNullOrEmpty(apiKey)) return;
-
-        var token = await _pgDb.ApiTokens.FirstOrDefaultAsync(t => t.Key == apiKey && t.IsActive);
-        if (token is null) return;
-
         var statusCode = result.Result switch
         {
             OkObjectResult => 200,
@@ -341,6 +444,15 @@ public class PlaygroundController : ControllerBase
             ObjectResult obj => obj.StatusCode ?? 500,
             _ => 200
         };
+
+        var apiKey = Request.Headers["X-Api-Key"].FirstOrDefault();
+        PlaygroundApiToken? token = null;
+        if (!string.IsNullOrEmpty(apiKey))
+            token = await _pgDb.ApiTokens.FirstOrDefaultAsync(t => t.Key == apiKey && t.IsActive);
+
+        // Always log — use token if authenticated, otherwise use the playground default token
+        token ??= await _pgDb.ApiTokens.FirstOrDefaultAsync(t => t.Key == _playgroundToken && t.IsActive);
+        if (token is null) return;
 
         _pgDb.RequestLogs.Add(new RequestLog
         {

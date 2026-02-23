@@ -189,7 +189,8 @@ public class AdminController : ControllerBase
                 t.IsActive,
                 t.CreatedAtUtc,
                 t.ExpiresAtUtc,
-                t.RevokedAtUtc
+                t.RevokedAtUtc,
+                t.DailyLimit
             }),
             totalRequests,
             vinStats = new
@@ -264,7 +265,8 @@ public class AdminController : ControllerBase
             id = token.Id,
             key = token.Key,
             name = token.Name,
-            expiresAt = token.ExpiresAtUtc
+            expiresAt = token.ExpiresAtUtc,
+            dailyLimit = token.DailyLimit
         });
     }
 
@@ -315,7 +317,27 @@ public class AdminController : ControllerBase
         return Ok(new { message = "Token étendu.", newExpiresAt = token.ExpiresAtUtc });
     }
 
-    // ??? Admin user management ?????????????????????????????????????
+    /// <summary>
+    /// Updates the daily request limit for a token. 0 = unlimited.
+    /// </summary>
+    [HttpPost("accounts/{accountId:guid}/tokens/{tokenId:guid}/daily-limit")]
+    public async Task<ActionResult> SetDailyLimit(Guid accountId, Guid tokenId, [FromBody] AdminSetDailyLimitRequest request)
+    {
+        var (admin, err) = await AuthenticateAdminAsync();
+        if (admin is null) return err!;
+
+        var token = await _db.ApiTokens.FirstOrDefaultAsync(t => t.Id == tokenId && t.AccountId == accountId);
+        if (token is null)
+            return NotFound(new { error = "Token non trouvé." });
+
+        token.DailyLimit = Math.Max(0, request.DailyLimit);
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation("Admin {Admin} set daily limit for token {TokenId} to {Limit}", admin.Username, tokenId, token.DailyLimit);
+        return Ok(new { message = $"Limite fixée à {token.DailyLimit} requêtes/jour.", dailyLimit = token.DailyLimit });
+    }
+
+    // ??? Admin user management ??????????????????????????????????????
 
     /// <summary>
     /// Lists all admin users. Requires any admin session.
@@ -616,4 +638,5 @@ public record AdminLoginRequest(string Username, string Password);
 public record AdminCreateRequest(string Username, string Password);
 public record AdminCreateTokenRequest(string? Name, int DurationDays);
 public record AdminExtendTokenRequest(int AdditionalDays);
+public record AdminSetDailyLimitRequest(int DailyLimit);
 public record AdminApproveRequestDto(int DurationDays);

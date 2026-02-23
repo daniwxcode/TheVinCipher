@@ -24,7 +24,10 @@
                 <li><a href="#playground">Tester</a></li>
                 <li><a href="/scalar/v1">API Docs</a></li>
             </ul>
-            <div class="navbar-actions"><button class="btn btn-primary" onclick="VinApp.openModal()">Demander l&#39;acc&egrave;s</button></div>
+            <div class="navbar-actions">
+                <a href="/Dashboard" class="btn btn-ghost btn-sm">&#128100; Espace Client</a>
+                <button class="btn btn-primary" onclick="VinApp.openModal()">Demander l&#39;acc&egrave;s</button>
+            </div>
             <button class="mobile-toggle" aria-label="Menu"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         </div>
     </nav>
@@ -212,7 +215,8 @@
                 <li><a href="/scalar/v1">API</a></li>
                 <li><a href="#">Tarifs</a></li>
                 <li><a href="#">Contact</a></li>
-                <li><a asp-page="/Admin">Admin</a></li>
+                <li><a href="/Dashboard">Espace Client</a></li>
+                <li><a href="/Admin">Admin</a></li>
             </ul>
             <span class="footer-tech"><span class="footer-tech-badge">SaaS</span></span>
         </div>

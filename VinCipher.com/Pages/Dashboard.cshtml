@@ -1,0 +1,81 @@
+@page
+@model DashboardModel
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VinCipher &mdash; Mon espace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="~/css/dashboard.min.css">
+</head>
+<body>
+
+<div id="loginScreen" class="login-box">
+    <h2>&#128273; Espace Client</h2>
+    <p class="login-subtitle">Connectez-vous avec votre cl&eacute; API.</p>
+    <form onsubmit="return Dashboard.login(event)">
+        <div class="form-group">
+            <label class="form-label">Cl&eacute; API</label>
+            <input class="form-input mono" type="text" id="loginToken" required placeholder="PG-..." autocomplete="off" spellcheck="false">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;margin-top:8px">Connexion</button>
+        <div class="error-msg" id="loginError"></div>
+    </form>
+    <div class="login-footer">
+        <a href="/">&#8592; Retour au site</a>
+    </div>
+</div>
+
+<div id="mainApp" class="app hidden">
+    <div class="header">
+        <h1>VinCipher <span>Mon espace</span></h1>
+        <div class="header-actions">
+            <span class="user-badge" id="userBadge"></span>
+            <button class="btn btn-ghost btn-sm" onclick="Dashboard.logout()">D&eacute;connexion</button>
+        </div>
+    </div>
+
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div class="tabs">
+        <button class="tab active" data-tab="decode" onclick="Dashboard.switchTab('decode')">D&eacute;coder un VIN</button>
+        <button class="tab" data-tab="history" onclick="Dashboard.switchTab('history')">Historique</button>
+        <button class="tab" data-tab="tokens" onclick="Dashboard.switchTab('tokens')">Mes cl&eacute;s</button>
+        <button class="tab" data-tab="account" onclick="Dashboard.switchTab('account')">Mon compte</button>
+    </div>
+
+    <div id="tab-decode">
+        <div class="decode-box">
+            <form class="decode-form" onsubmit="return Dashboard.decode(event)">
+                <input class="decode-input mono" type="text" id="decodeVin" maxlength="17" minlength="17" placeholder="Entrez un VIN (17 caract&egrave;res)" required spellcheck="false" autocomplete="off">
+                <button type="submit" class="btn btn-primary" id="decodeBtn">D&eacute;coder</button>
+            </form>
+            <div class="decode-status" id="decodeStatus"></div>
+        </div>
+        <div id="decodeResult" class="hidden"></div>
+    </div>
+
+    <div id="tab-history" class="hidden">
+        <div class="table-toolbar">
+            <span class="section-label" id="historyCount"></span>
+            <div class="pagination" id="historyPagination"></div>
+        </div>
+        <div id="historyList"></div>
+    </div>
+
+    <div id="tab-tokens" class="hidden">
+        <div id="tokensList"></div>
+    </div>
+
+    <div id="tab-account" class="hidden">
+        <div class="detail-panel" id="accountInfo"></div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="~/js/dashboard.min.js"></script>
+</body>
+</html>

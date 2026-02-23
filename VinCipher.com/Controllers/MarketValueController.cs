@@ -31,8 +31,7 @@ public class MarketValueController : ControllerBase
     /// <param name="token"></param>
     /// <param name="vin"></param>
     /// <returns></returns>
-    [HttpGet()]
-    [HttpPost]
+    [HttpGet]
     public async Task<ActionResult<MarketValueResponse>> GetMarketValue (string token, string vin)
     {
 

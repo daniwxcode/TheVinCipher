@@ -32,6 +32,7 @@ builder.Services.AddSingleton<BaseApiProvider, VinAuditProvider>(_ => new VinAud
 builder.Services.AddScoped<VinRushScrapper>();
 builder.Services.AddSingleton<IScrappableSource, VinRusUrlGenerator>();
 builder.Services.AddSingleton<TokensProvider>(_ => new TokensProvider(configuration));
+builder.Services.AddSingleton<VinDecodeCache>();
 builder.Services.AddScoped<ICrudServices, VinToSearchServices>();
 builder.Services.AddScoped<ICarService, BaseCarServices>();
 builder.Services.AddHttpClient<BaseApiProviderClient<CarBase>, VincarioApiClient>();
