@@ -71,7 +71,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var pgDb = scope.ServiceProvider.GetRequiredService<PlaygroundDbContext>();
-    pgDb.Database.EnsureCreated();
+    pgDb.Database.Migrate();
 
     // Seed root admin if not present
     if (!pgDb.AdminUsers.Any(a => a.IsRoot))
@@ -84,6 +84,23 @@ using (var scope = app.Services.CreateScope())
         };
         rootUser.SetPassword(configuration["Admin:RootPassword"] ?? "VinCipher@Admin2025!");
         pgDb.AdminUsers.Add(rootUser);
+        pgDb.SaveChanges();
+    }
+
+    // Seed a sample pending access request if none exist
+    if (!pgDb.AccessRequests.Any())
+    {
+        pgDb.AccessRequests.Add(new VinCipher.Model.Playground.AccessRequest
+        {
+            Id = Guid.NewGuid(),
+            Name = "Jean Dupont",
+            Email = "jean.dupont@example.com",
+            Phone = "+221771234567",
+            PhoneCode = "+221",
+            Domain = "concessionnaire",
+            Reason = "Je suis concessionnaire automobile à Dakar et je souhaite intégrer le décodage VIN dans mon système de gestion pour vérifier les véhicules importés.",
+            Status = "pending"
+        });
         pgDb.SaveChanges();
     }
 
