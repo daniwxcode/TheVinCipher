@@ -1,19 +1,162 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
+# ??????????????????????????????????????????????????????????????
+# VinCipher CI/CD — Azure DevOps Pipeline
+# .NET 10 · Build ? Deploy to VPS via SSH
+# ??????????????????????????????????????????????????????????????
 
 trigger:
-- master
+  branches:
+    include:
+      - master
+      - release/*
+  paths:
+    exclude:
+      - '**/*.md'
+      - '.github/**'
+      - 'deploy/**'
 
-pool:
-  vmImage: ubuntu-latest
+pr:
+  branches:
+    include:
+      - master
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+# ?? Variables ????????????????????????????????????????????????
+# Set these in Azure DevOps ? Pipelines ? Edit ? Variables:
+#   sshServiceConnection : name of SSH service connection (see README)
+#   dbConnectionString   : SQL Server connection string         (?? secret)
+#   playgroundHmacSecret : HMAC secret for playground challenge (?? secret)
+#   playgroundToken      : decode-only API token                (?? secret)
+#   vinDecoderApiKey     : vindecoder.eu API key                (?? secret)
+#   vinDecoderSecret     : vindecoder.eu secret key             (?? secret)
+#   vinAuditApiKey       : VinAudit API key                     (?? secret)
+variables:
+  solution: 'VinCipheSolution.slnx'
+  buildConfiguration: 'Release'
+  webProject: 'VinCipher.com/VinCipher.com.csproj'
+  dotnetVersion: '10.0.x'
+  artifactName: 'vincipher-web'
+  deployPath: '/var/www/vincipher'
+  serviceName: 'vincipher'
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+# ?? Stage 1: Build ???????????????????????????????????????????
+stages:
+- stage: Build
+  displayName: 'Build & Publish'
+  jobs:
+  - job: BuildJob
+    displayName: 'Build .NET 10'
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+
+    - task: UseDotNet@2
+      displayName: 'Install .NET $(dotnetVersion)'
+      inputs:
+        packageType: 'sdk'
+        version: '$(dotnetVersion)'
+        includePreviewVersions: true
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Restore packages'
+      inputs:
+        command: 'restore'
+        projects: '$(solution)'
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Build solution'
+      inputs:
+        command: 'build'
+        projects: '$(solution)'
+        arguments: '--configuration $(buildConfiguration) --no-restore'
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Publish web project'
+      inputs:
+        command: 'publish'
+        projects: '$(webProject)'
+        arguments: '--configuration $(buildConfiguration) --no-build --output $(Build.ArtifactStagingDirectory)/web'
+        zipAfterPublish: true
+        modifyOutputPath: false
+
+    - task: PublishPipelineArtifact@1
+      displayName: 'Upload artifact'
+      inputs:
+        targetPath: '$(Build.ArtifactStagingDirectory)/web'
+        artifact: '$(artifactName)'
+        publishLocation: 'pipeline'
+
+# ?? Stage 2: Deploy to VPS ???????????????????????????????????
+- stage: Deploy
+  displayName: 'Deploy to VPS'
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  jobs:
+  - deployment: DeployVPS
+    displayName: 'SSH deploy to VPS'
+    pool:
+      vmImage: 'ubuntu-latest'
+    environment: 'vincipher-production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          # Download build artifact
+          - task: DownloadPipelineArtifact@2
+            displayName: 'Download artifact'
+            inputs:
+              artifact: '$(artifactName)'
+              path: '$(Pipeline.Workspace)/drop'
+
+          # Upload zip to VPS
+          - task: CopyFilesOverSSH@0
+            displayName: 'Upload artifact to VPS'
+            inputs:
+              sshEndpoint: '$(sshServiceConnection)'
+              sourceFolder: '$(Pipeline.Workspace)/drop'
+              contents: '**/*.zip'
+              targetFolder: '/tmp/vincipher-deploy'
+              cleanTargetFolder: true
+
+          # Upload deployment script
+          - task: CopyFilesOverSSH@0
+            displayName: 'Upload deploy script'
+            inputs:
+              sshEndpoint: '$(sshServiceConnection)'
+              sourceFolder: 'deploy'
+              contents: 'deploy.sh'
+              targetFolder: '/tmp/vincipher-deploy'
+
+          # Run deployment on VPS (stop ? extract ? inject env ? restart)
+          - task: SSH@0
+            displayName: 'Execute deployment'
+            inputs:
+              sshEndpoint: '$(sshServiceConnection)'
+              runOptions: 'inline'
+              inline: |
+                chmod +x /tmp/vincipher-deploy/deploy.sh
+                sudo /tmp/vincipher-deploy/deploy.sh \
+                  "$(deployPath)" \
+                  "$(serviceName)" \
+                  "$(dbConnectionString)" \
+                  "$(playgroundHmacSecret)" \
+                  "$(playgroundToken)" \
+                  "$(vinDecoderApiKey)" \
+                  "$(vinDecoderSecret)" \
+                  "$(vinAuditApiKey)"
+
+          # Verify service is healthy
+          - task: SSH@0
+            displayName: 'Health check'
+            inputs:
+              sshEndpoint: '$(sshServiceConnection)'
+              runOptions: 'inline'
+              inline: |
+                echo "Waiting for service to start..."
+                sleep 5
+                if systemctl is-active --quiet $(serviceName); then
+                  echo "$(serviceName) is running."
+                else
+                  echo "ERROR: $(serviceName) failed to start!"
+                  sudo journalctl -u $(serviceName) --no-pager -n 30
+                  exit 1
+                fi

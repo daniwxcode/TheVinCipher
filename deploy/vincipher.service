@@ -1,0 +1,46 @@
+# /etc/systemd/system/vincipher.service
+# systemd unit for VinCipher .NET 10 web API
+# Install: sudo cp vincipher.service /etc/systemd/system/
+#          sudo systemctl daemon-reload && sudo systemctl enable vincipher
+
+[Unit]
+Description=VinCipher .NET Web API
+After=network.target
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/vincipher
+ExecStart=/usr/bin/dotnet /var/www/vincipher/VinCipher.com.dll
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://localhost:3001
+Environment=ConnectionStrings__DefaultConnection=Server=SQL2019-001.adaptivewebhosting.com;Database=hermesey_vinAudit;User Id=VinEasyUser;Password=@Iq42m*s7;MultipleActiveResultSets=True;
+Environment=Playground__HmacSecret=v1Nc!pH3r_pL4yGr0uNd_$ecReT_2025#x9Kz
+Environment=PlaygroundToken=VinCipherCar-DECODE-ONLY-5AA01EAFC25A31A66C11D6D9626D858A5EA
+Environment=Vin__vindecoder__apikey=ca2fcd922501
+Environment=Vin__vindecoder__secretkey=86f4cbf2e8
+Environment=Vin__VinAudit__apikey=K683RXZF5DYELYC
+
+# Restart policy
+Restart=always
+RestartSec=5
+
+# Security hardening
+ProtectSystem=full
+ProtectHome=true
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Logging
+SyslogIdentifier=vincipher
+StandardOutput=journal
+StandardError=journal
+
+# Limits
+TimeoutStartSec=30
+TimeoutStopSec=15
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target
