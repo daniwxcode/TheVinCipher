@@ -90,8 +90,128 @@
         .footer-links a:hover{color:var(--color-text)}
         .footer-tech{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--color-text-muted)}
         .footer-tech-badge{padding:2px 8px;font-size:11px;font-weight:600;background:var(--color-accent-glow);color:var(--color-accent-light);border-radius:var(--radius-sm)}
+        /* Modal overlay */
+        .modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:24px}
+        .modal-overlay.active{display:flex}
+        .modal{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);width:100%;max-width:520px;max-height:90vh;overflow-y:auto;position:relative;animation:modal-in .25s ease}
+        @keyframes modal-in{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+        .modal-header{display:flex;align-items:center;justify-content:space-between;padding:24px 28px 0}
+        .modal-header h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
+        .modal-close{background:none;border:none;color:var(--color-text-muted);cursor:pointer;padding:4px;border-radius:var(--radius-sm);transition:color .2s}
+        .modal-close:hover{color:var(--color-text)}
+        .modal-body{padding:24px 28px 28px}
+        .modal-tabs{display:flex;gap:0;border-bottom:1px solid var(--color-border);margin:16px 28px 0}
+        .modal-tab{padding:10px 20px;font-size:14px;font-weight:600;font-family:var(--font-sans);color:var(--color-text-muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all .2s}
+        .modal-tab.active{color:var(--color-accent-light);border-bottom-color:var(--color-accent)}
+        .modal-tab:hover:not(.active){color:var(--color-text-secondary)}
+        .tab-content{display:none}.tab-content.active{display:block}
+        /* Form */
+        .form-group{margin-bottom:20px}
+        .form-label{display:block;font-size:13px;font-weight:600;color:var(--color-text-secondary);margin-bottom:6px;letter-spacing:.02em}
+        .form-input,.form-select{width:100%;padding:11px 14px;font-size:14px;font-family:var(--font-sans);color:var(--color-text);background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);outline:none;transition:border-color .2s}
+        .form-input:focus,.form-select:focus{border-color:var(--color-accent)}
+        .form-input::placeholder{color:var(--color-text-muted)}
+        .form-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2371717a' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+        .form-select option{background:var(--color-surface);color:var(--color-text)}
+        .phone-row{display:flex;gap:10px}
+        .phone-row .form-select{width:130px;flex-shrink:0}
+        .phone-row .form-input{flex:1}
+        .form-error{font-size:12px;color:#ef4444;margin-top:4px;display:none}
+        .form-error.visible{display:block}
+        .form-success{padding:16px;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.2);border-radius:var(--radius-md);color:#4ade80;font-size:14px;text-align:center;margin-bottom:16px;display:none}
+        .form-success.visible{display:block}
+        /* Dashboard */
+        .dash-account{padding:20px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);margin-bottom:20px}
+        .dash-account-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:14px}
+        .dash-account-row span:first-child{color:var(--color-text-muted);font-weight:500}
+        .dash-account-row span:last-child{color:var(--color-text)}
+        .dash-section-title{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+        .btn-sm{padding:7px 14px;font-size:13px;font-weight:600;font-family:var(--font-sans);border-radius:var(--radius-full);border:none;cursor:pointer;transition:all .2s}
+        .btn-sm.btn-primary{background:var(--color-accent);color:#fff}
+        .btn-sm.btn-primary:hover{background:var(--color-accent-light)}
+        .btn-sm.btn-danger{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.2)}
+        .btn-sm.btn-danger:hover{background:rgba(239,68,68,.2)}
+        .btn-sm.btn-ghost{background:none;color:var(--color-text-secondary);border:1px solid var(--color-border)}
+        .btn-sm.btn-ghost:hover{background:var(--color-surface-hover)}
+        .token-list{display:flex;flex-direction:column;gap:12px}
+        .token-card{padding:16px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md)}
+        .token-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+        .token-card-name{font-size:14px;font-weight:600}
+        .token-card-badge{padding:2px 8px;font-size:11px;font-weight:600;border-radius:var(--radius-sm)}
+        .token-card-badge.active{background:rgba(74,222,128,.1);color:#4ade80}
+        .token-card-badge.revoked{background:rgba(239,68,68,.1);color:#ef4444}
+        .token-key{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+        .token-key code{flex:1;padding:8px 12px;font-size:13px;font-family:'SF Mono','Fira Code','Cascadia Code',monospace;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-sm);color:var(--color-text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .token-key button{flex-shrink:0}
+        .token-meta{font-size:12px;color:var(--color-text-muted)}
+        .token-actions{display:flex;gap:8px;margin-top:10px}
+        .empty-state{text-align:center;padding:32px 16px;color:var(--color-text-muted);font-size:14px}
+        .empty-state svg{margin:0 auto 12px;opacity:.4}
+        .btn-logout{margin-top:16px;width:100%}
+        .toast{position:fixed;bottom:24px;right:24px;z-index:300;padding:12px 20px;font-size:14px;font-weight:500;font-family:var(--font-sans);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);color:var(--color-text);box-shadow:0 8px 24px rgba(0,0,0,.3);transform:translateY(80px);opacity:0;transition:all .3s ease;pointer-events:none}
+        .toast.visible{transform:translateY(0);opacity:1;pointer-events:auto}
+        /* Decode Playground */
+        .playground{background:var(--color-surface);border-top:1px solid var(--color-border);border-bottom:1px solid var(--color-border)}
+        .playground-box{max-width:720px;margin:0 auto}
+        .playground-form{display:flex;gap:12px;margin-top:32px}
+        .playground-input{flex:1;padding:14px 18px;font-size:16px;font-family:'SF Mono','Fira Code','Cascadia Code',monospace;color:var(--color-text);background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);outline:none;transition:border-color .2s;letter-spacing:.05em;text-transform:uppercase}
+        .playground-input:focus{border-color:var(--color-accent)}
+        .playground-input::placeholder{color:var(--color-text-muted);text-transform:none;letter-spacing:normal;font-family:var(--font-sans)}
+        .playground-btn{flex-shrink:0}
+        .playground-hint{margin-top:10px;font-size:13px;color:var(--color-text-muted)}
+        .playground-hint code{padding:2px 6px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:4px;font-size:12px;cursor:pointer;transition:border-color .2s}
+        .playground-hint code:hover{border-color:var(--color-accent-light);color:var(--color-accent-light)}
+        /* Result card */
+        .decode-result{margin-top:40px;display:none}
+        .decode-result.visible{display:block;animation:result-in .4s ease}
+        @keyframes result-in{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        .vehicle-card{background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);overflow:hidden}
+        .vehicle-card-hero{padding:32px 28px;background:linear-gradient(135deg,rgba(124,58,237,.08),rgba(192,132,252,.05));border-bottom:1px solid var(--color-border);position:relative}
+        .vehicle-card-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;border-radius:var(--radius-full);margin-bottom:16px}
+        .vehicle-card-badge.success{background:rgba(74,222,128,.1);color:#4ade80;border:1px solid rgba(74,222,128,.15)}
+        .vehicle-card-badge.error{background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.15)}
+        .vehicle-card-make{font-size:clamp(28px,4vw,36px);font-weight:800;letter-spacing:-.03em;line-height:1.1}
+        .vehicle-card-model{font-size:clamp(18px,2.5vw,22px);font-weight:600;color:var(--color-text-secondary);margin-top:4px}
+        .vehicle-card-vin{display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:6px 12px;font-size:13px;font-family:'SF Mono','Fira Code','Cascadia Code',monospace;color:var(--color-text-muted);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-sm);letter-spacing:.04em}
+        .vehicle-card-timer{position:absolute;top:28px;right:28px;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--color-accent-light)}
+        .vehicle-card-timer svg{opacity:.7}
+        .vehicle-specs{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0}
+        .vehicle-spec{padding:16px 20px;border-bottom:1px solid var(--color-border);border-right:1px solid var(--color-border);transition:background .15s}
+        .vehicle-spec:hover{background:rgba(124,58,237,.03)}
+        .vehicle-spec-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--color-text-muted);margin-bottom:4px}
+        .vehicle-spec-value{font-size:15px;font-weight:600;color:var(--color-text);word-break:break-word}
+        .vehicle-raw-toggle{padding:14px 20px;font-size:13px;font-weight:600;color:var(--color-text-muted);cursor:pointer;transition:color .2s;display:flex;align-items:center;gap:8px;border:none;background:none;width:100%;font-family:var(--font-sans);border-top:1px solid var(--color-border)}
+        .vehicle-raw-toggle:hover{color:var(--color-text)}
+        .vehicle-raw-toggle svg{transition:transform .2s}
+        .vehicle-raw-toggle.open svg{transform:rotate(180deg)}
+        .vehicle-raw{display:none;padding:16px 20px;background:var(--color-surface);border-top:1px solid var(--color-border);max-height:320px;overflow-y:auto}
+        .vehicle-raw.visible{display:block}
+        .vehicle-raw pre{font-size:13px;font-family:'SF Mono','Fira Code','Cascadia Code',monospace;color:var(--color-text-secondary);line-height:1.7;white-space:pre-wrap;word-break:break-all}
+        /* Loading */
+        .decode-loading{display:none;margin-top:40px;text-align:center;padding:48px 20px}
+        .decode-loading.visible{display:block}
+        .decode-spinner{width:40px;height:40px;border:3px solid var(--color-border);border-top-color:var(--color-accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .decode-loading p{font-size:15px;color:var(--color-text-secondary)}
+        .decode-loading .decode-vin-echo{font-family:'SF Mono','Fira Code','Cascadia Code',monospace;color:var(--color-accent-light);font-weight:600;letter-spacing:.04em}
+        /* Error */
+        .decode-error{display:none;margin-top:40px;padding:24px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);border-radius:var(--radius-md);text-align:center}
+        .decode-error.visible{display:block;animation:result-in .3s ease}
+        .decode-error p{font-size:15px;color:#ef4444}
+        .decode-error .decode-error-detail{margin-top:8px;font-size:13px;color:var(--color-text-muted)}
+        /* Upsell banner */
+        .vehicle-upsell{padding:20px 24px;background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(192,132,252,.06));border-top:1px solid var(--color-border);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+        .vehicle-upsell-text{flex:1;min-width:200px;font-size:14px;color:var(--color-text-secondary);line-height:1.6}
+        .vehicle-upsell-text strong{color:var(--color-accent-light);font-weight:700}
+        .vehicle-upsell .btn{flex-shrink:0;padding:10px 20px;font-size:13px}
+        .playground-quota{margin-top:12px;text-align:center;font-size:13px;color:var(--color-text-muted)}
+        .playground-quota strong{color:var(--color-accent-light)}
+        /* Rate limit error */
+        .decode-error-cta{margin-top:16px}
+        .decode-error-cta .btn{font-size:14px}
+        @media(max-width:768px){.playground-form{flex-direction:column}.playground-form .btn{width:100%}.vehicle-specs{grid-template-columns:1fr 1fr}.vehicle-spec{border-right:none}.vehicle-spec:nth-child(odd){border-right:1px solid var(--color-border)}.vehicle-card-timer{position:static;margin-top:12px}}
         @media(max-width:1024px){.features-grid{grid-template-columns:repeat(2,1fr)}.why-grid{grid-template-columns:repeat(2,1fr)}}
-        @media(max-width:768px){.section{padding:64px 0}.hero{padding:140px 0 80px}.navbar-links,.navbar-actions{display:none}.mobile-toggle{display:block}.problem-grid{grid-template-columns:1fr;gap:24px}.solution-grid{grid-template-columns:1fr}.features-grid{grid-template-columns:1fr}.why-grid{grid-template-columns:1fr;gap:8px}.hero-actions{flex-direction:column}.hero-actions .btn{width:100%}.footer .container{flex-direction:column;gap:24px;text-align:center}.cta-box{padding:40px 24px}}
+        @media(max-width:768px){.section{padding:64px 0}.hero{padding:140px 0 80px}.navbar-links,.navbar-actions{display:none}.mobile-toggle{display:block}.problem-grid{grid-template-columns:1fr;gap:24px}.solution-grid{grid-template-columns:1fr}.features-grid{grid-template-columns:1fr}.why-grid{grid-template-columns:1fr;gap:8px}.hero-actions{flex-direction:column}.hero-actions .btn{width:100%}.footer .container{flex-direction:column;gap:24px;text-align:center}.cta-box{padding:40px 24px}.modal{max-width:100%;margin:0 12px}.phone-row{flex-direction:column}.phone-row .form-select{width:100%}}
     </style>
 </head>
 <body>
@@ -103,37 +223,41 @@
                 <li><a href="#solution">Solution</a></li>
                 <li><a href="#features">Fonctionnalit&eacute;s</a></li>
                 <li><a href="#why">Pourquoi nous</a></li>
+                <li><a href="#playground">Tester</a></li>
                 <li><a href="/scalar/v1">API Docs</a></li>
             </ul>
-            <div class="navbar-actions"><a href="#cta" class="btn btn-primary">Commencer</a></div>
+            <div class="navbar-actions"><button class="btn btn-primary" onclick="VinApp.openModal()">Commencer</button></div>
             <button class="mobile-toggle" aria-label="Menu"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
         </div>
     </nav>
 
     <section class="hero">
         <div class="container">
-            <h1 class="hero-title">D&eacute;codez n&#39;importe quel v&eacute;hicule.<br><span class="highlight">Partout dans le monde.</span></h1>
-            <p class="hero-subtitle">VinCipher transforme un simple num&eacute;ro VIN en donn&eacute;es exploitables : identit&eacute; du v&eacute;hicule, historique, &eacute;valuation et scoring &mdash; en quelques millisecondes.</p>
+            <div class="hero-badge"><span class="hero-badge-dot"></span> Plateforme SaaS &mdash; API ouverte</div>
+            <h1 class="hero-title">Une API, tous les v&eacute;hicules.<br><span class="highlight">Partout dans le monde.</span></h1>
+            <p class="hero-subtitle">VinCipher est le SaaS qui transforme un simple VIN en donn&eacute;es exploitables &mdash; identit&eacute;, historique, &eacute;valuation et scoring &mdash; pour n&#39;importe quel v&eacute;hicule, dans n&#39;importe quel pays, en quelques millisecondes.</p>
             <div class="hero-actions">
-                <a href="#cta" class="btn btn-primary btn-large">Essayer maintenant <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10m-4-4 4 4-4 4"/></svg></a>
+                <button class="btn btn-primary btn-large" onclick="VinApp.openModal()">Essayer maintenant <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10m-4-4 4 4-4 4"/></svg></button>
                 <a href="/scalar/v1" class="btn btn-secondary btn-large">Voir la documentation API</a>
             </div>
             <div class="hero-visual">
                 <div class="hero-code-block">
                     <div class="hero-code-header"><span class="hero-code-dot"></span><span class="hero-code-dot"></span><span class="hero-code-dot"></span><span>GET /api/vin/decode</span></div>
                     <div class="hero-code-body">
-<span class="comment">// Requ&ecirc;te</span>
+<span class="comment">// D&eacute;codez un v&eacute;hicule de n&#39;importe quel pays</span>
 <span class="method">GET</span> /api/vin/<span class="string">WBA3A5G59DNP26082</span>/decode
 
-<span class="comment">// R&eacute;ponse &mdash; 48ms</span>
+<span class="comment">// R&eacute;ponse &mdash; 48ms &#127465;&#127466; Allemagne</span>
 {
   <span class="property">"manufacturer"</span>: <span class="string">"BMW"</span>,
-  <span class="property">"model"</span>: <span class="string">"335i"</span>,
+  <span class="property">"model"</span>: <span class="string">"335i xDrive"</span>,
   <span class="property">"year"</span>: <span class="string">2013</span>,
-  <span class="property">"country"</span>: <span class="string">"Allemagne"</span>,
+  <span class="property">"origin"</span>: <span class="string">"Munich, Allemagne"</span>,
   <span class="property">"score"</span>: <span class="string">87</span>,
   <span class="property">"status"</span>: <span class="string">"clean"</span>
 }
+
+<span class="comment">// &#127471;&#127477; Japon &bull; &#127482;&#127480; &Eacute;tats-Unis &bull; &#127472;&#127479; Cor&eacute;e &bull; 50+ march&eacute;s</span>
                     </div>
                 </div>
             </div>
@@ -143,8 +267,8 @@
     <section class="problem section" id="problem">
         <div class="container">
             <span class="section-label">Le probl&egrave;me</span>
-            <h2 class="section-title">L&#39;information v&eacute;hicule est fragment&eacute;e, opaque et peu fiable.</h2>
-            <p class="section-description">Acheter ou &eacute;valuer un v&eacute;hicule &agrave; l&#39;international reste un parcours du combattant. Les donn&eacute;es sont dispers&eacute;es, incoh&eacute;rentes, et souvent inaccessibles.</p>
+            <h2 class="section-title">L&#39;information v&eacute;hicule est fragment&eacute;e, opaque et varie d&#39;un pays &agrave; l&#39;autre.</h2>
+            <p class="section-description">Acheter, vendre ou &eacute;valuer un v&eacute;hicule &agrave; l&#39;international reste un parcours du combattant. Chaque march&eacute; a ses bases de donn&eacute;es, ses formats, ses lacunes.</p>
             <div class="problem-grid">
                 <div class="problem-card">
                     <div class="problem-card-icon">&#9888;</div>
@@ -163,13 +287,13 @@
     <section class="section" id="solution">
         <div class="container">
             <span class="section-label">La solution</span>
-            <h2 class="section-title">Un VIN. Toutes les r&eacute;ponses.</h2>
-            <p class="section-description">VinCipher agr&egrave;ge, d&eacute;code et analyse les donn&eacute;es v&eacute;hicules &agrave; l&#39;&eacute;chelle mondiale pour vous donner une vision compl&egrave;te et fiable en un seul appel API.</p>
+            <h2 class="section-title">Un VIN. Toutes les r&eacute;ponses. Un seul abonnement.</h2>
+            <p class="section-description">VinCipher agr&egrave;ge, d&eacute;code et analyse les donn&eacute;es de v&eacute;hicules du monde entier. Int&eacute;grez notre API en quelques minutes et acc&eacute;dez &agrave; une couverture globale sans g&eacute;rer de multiples fournisseurs.</p>
             <div class="solution-grid">
                 <div class="solution-card"><div class="solution-card-number">01</div><h3>D&eacute;codage VIN intelligent</h3><p>Extraction instantan&eacute;e du constructeur, mod&egrave;le, ann&eacute;e, motorisation, pays d&#39;origine et sp&eacute;cifications techniques &agrave; partir du standard ISO 3779.</p></div>
                 <div class="solution-card"><div class="solution-card-number">02</div><h3>Analyse des donn&eacute;es mondiales</h3><p>Croisement de multiples sources de donn&eacute;es internationales pour reconstituer l&#39;historique complet du v&eacute;hicule, peu importe son pays d&#39;origine.</p></div>
                 <div class="solution-card"><div class="solution-card-number">03</div><h3>&Eacute;valuation et scoring</h3><p>Algorithme propri&eacute;taire de scoring qui &eacute;value la fiabilit&eacute;, l&#39;&eacute;tat estim&eacute; et la valeur r&eacute;siduelle du v&eacute;hicule sur une &eacute;chelle claire.</p></div>
-                <div class="solution-card"><div class="solution-card-number">04</div><h3>API rapide et moderne</h3><p>API REST con&ccedil;ue pour les d&eacute;veloppeurs : temps de r&eacute;ponse &lt;100ms, documentation interactive via Scalar, authentification par token, pagination int&eacute;gr&eacute;e.</p></div>
+                <div class="solution-card"><div class="solution-card-number">04</div><h3>API SaaS cl&eacute; en main</h3><p>API REST con&ccedil;ue pour les d&eacute;veloppeurs : temps de r&eacute;ponse &lt;100ms, documentation Scalar, authentification par token, plans flexibles &agrave; l&#39;usage et int&eacute;gration en quelques minutes.</p></div>
             </div>
         </div>
     </section>
@@ -186,6 +310,8 @@
                 <div class="feature-card"><div class="feature-icon">&#9889;</div><h3>API REST performante</h3><p>Temps de r&eacute;ponse moyen &lt;100ms, rate limiting intelligent, r&eacute;ponses JSON structur&eacute;es, versioning d&#39;API int&eacute;gr&eacute;.</p></div>
                 <div class="feature-card"><div class="feature-icon">&#128214;</div><h3>Documentation Scalar</h3><p>Documentation interactive auto-g&eacute;n&eacute;r&eacute;e avec Scalar. Testez les endpoints directement depuis le navigateur, sans outil tiers.</p></div>
                 <div class="feature-card"><div class="feature-icon">&#128274;</div><h3>S&eacute;curit&eacute; int&eacute;gr&eacute;e</h3><p>Authentification par token, chiffrement TLS, rate limiting par cl&eacute; API et conformit&eacute; RGPD pour la protection des donn&eacute;es.</p></div>
+                <div class="feature-card"><div class="feature-icon">&#128176;</div><h3>Facturation &agrave; l&#39;usage</h3><p>Mod&egrave;le SaaS transparent : payez uniquement pour les requ&ecirc;tes consomm&eacute;es. Plans gratuit, pro et entreprise adapt&eacute;s &agrave; chaque volume.</p></div>
+                <div class="feature-card"><div class="feature-icon">&#127760;</div><h3>Multi-tenant &amp; multi-r&eacute;gion</h3><p>Architecture cloud-native isol&eacute;e par client. D&eacute;ployez au plus proche de vos utilisateurs gr&acirc;ce &agrave; une infrastructure distribu&eacute;e.</p></div>
             </div>
         </div>
     </section>
@@ -200,6 +326,73 @@
                 <div class="why-card"><div class="why-metric">&lt;100ms</div><h3>Rapidit&eacute;</h3><p>Temps de r&eacute;ponse moyen de l&#39;API, gr&acirc;ce &agrave; une architecture optimis&eacute;e et du caching intelligent.</p></div>
                 <div class="why-card"><div class="why-metric">99.9%</div><h3>Fiabilit&eacute;</h3><p>SLA de disponibilit&eacute; garanti. Infrastructure redondante et monitoring en temps r&eacute;el.</p></div>
                 <div class="why-card"><div class="why-metric">50+</div><h3>Pays couverts</h3><p>Couverture internationale avec support des standards VIN de plus de 50 march&eacute;s automobiles.</p></div>
+                <div class="why-card"><div class="why-metric">1</div><h3>Seule API n&eacute;cessaire</h3><p>Remplacez des dizaines de fournisseurs par un point d&#39;acc&egrave;s unique. Un abonnement, une cl&eacute; API, z&eacute;ro complexit&eacute;.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="playground section" id="playground">
+        <div class="container">
+            <div class="playground-box">
+                <div style="text-align:center">
+                    <span class="section-label">Tester l&#39;API</span>
+                    <h2 class="section-title" style="margin-left:auto;margin-right:auto">Entrez un VIN, voyez la magie.</h2>
+                    <p class="section-description" style="margin:0 auto">Saisissez un num&eacute;ro de ch&acirc;ssis (VIN) pour d&eacute;coder un v&eacute;hicule en temps r&eacute;el. Aucune cl&eacute; API requise pour tester.</p>
+                </div>
+                <form class="playground-form" id="decodeForm" onsubmit="return VinDecode.decode(event)">
+                    <input class="playground-input" type="text" id="decodeVin" maxlength="17" minlength="17" placeholder="Ex : WBA3A5G59DNP26082" required spellcheck="false" autocomplete="off">
+                    <button type="submit" class="btn btn-primary playground-btn" id="decodeBtn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        D&eacute;coder
+                    </button>
+                </form>
+                <div class="playground-hint">
+                    Essayez : <code onclick="VinDecode.fill('WBA3A5G59DNP26082')">WBA3A5G59DNP26082</code>
+                    <code onclick="VinDecode.fill('1HGBH41JXMN109186')">1HGBH41JXMN109186</code>
+                    <code onclick="VinDecode.fill('5YJSA1DG9DFP14705')">5YJSA1DG9DFP14705</code>
+                </div>
+                <div class="playground-quota" id="playgroundQuota"></div>
+
+                <!-- Loading -->
+                <div class="decode-loading" id="decodeLoading">
+                    <div class="decode-spinner"></div>
+                    <p>D&eacute;codage de <span class="decode-vin-echo" id="loadingVin"></span>&hellip;</p>
+                </div>
+
+                <!-- Error -->
+                <div class="decode-error" id="decodeError">
+                    <p id="decodeErrorMsg"></p>
+                    <div class="decode-error-detail" id="decodeErrorDetail"></div>
+                    <div class="decode-error-cta" id="decodeErrorCta" style="display:none">
+                        <button class="btn btn-primary" onclick="VinApp.openModal()">Cr&eacute;er un compte &amp; d&eacute;bloquer l&#39;API</button>
+                    </div>
+                </div>
+
+                <!-- Result -->
+                <div class="decode-result" id="decodeResult">
+                    <div class="vehicle-card">
+                        <div class="vehicle-card-hero">
+                            <div class="vehicle-card-badge success" id="resultBadge"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 8.5l3.5 3.5 6.5-8"/></svg> <span id="resultBadgeText">D&eacute;cod&eacute;</span></div>
+                            <div class="vehicle-card-make" id="resultMake"></div>
+                            <div class="vehicle-card-model" id="resultModel"></div>
+                            <div class="vehicle-card-vin" id="resultVin"></div>
+                            <div class="vehicle-card-timer" id="resultTimer">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                                <span id="resultTimerValue"></span>
+                            </div>
+                        </div>
+                        <div class="vehicle-specs" id="resultSpecs"></div>
+                        <div class="vehicle-upsell" id="resultUpsell" style="display:none">
+                            <div class="vehicle-upsell-text"><strong id="upsellCount"></strong> <span id="upsellMsg"></span></div>
+                            <button class="btn btn-primary" onclick="VinApp.openModal()">Obtenir l&#39;acc&egrave;s complet</button>
+                        </div>
+                        <button class="vehicle-raw-toggle" id="rawToggle" onclick="VinDecode.toggleRaw()">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>
+                            Voir la r&eacute;ponse JSON brute
+                        </button>
+                        <div class="vehicle-raw" id="rawJson"><pre id="rawJsonPre"></pre></div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -209,9 +402,9 @@
             <div class="cta-box">
                 <span class="section-label">Pr&ecirc;t &agrave; commencer ?</span>
                 <h2>D&eacute;codez votre premier VIN en 30 secondes.</h2>
-                <p>Cr&eacute;ez votre compte gratuitement. Aucune carte bancaire requise. Acc&eacute;dez imm&eacute;diatement &agrave; l&#39;API et commencez &agrave; int&eacute;grer VinCipher.</p>
+                <p>Cr&eacute;ez votre compte gratuitement. Aucune carte bancaire requise. Recevez votre cl&eacute; API et int&eacute;grez VinCipher dans votre application d&egrave;s aujourd&#39;hui.</p>
                 <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-                    <a href="#" class="btn btn-primary btn-large">Commencer gratuitement <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10m-4-4 4 4-4 4"/></svg></a>
+                    <button class="btn btn-primary btn-large" onclick="VinApp.openModal()">Commencer gratuitement <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10m-4-4 4 4-4 4"/></svg></button>
                     <a href="/scalar/v1" class="btn btn-secondary btn-large">Explorer l&#39;API</a>
                 </div>
             </div>
@@ -225,8 +418,10 @@
                 <li><a href="#">Conditions</a></li>
                 <li><a href="#">Confidentialit&eacute;</a></li>
                 <li><a href="/scalar/v1">API</a></li>
+                <li><a href="#">Tarifs</a></li>
                 <li><a href="#">Contact</a></li>
-            </ul>            
+            </ul>
+            <span class="footer-tech"><span class="footer-tech-badge">SaaS</span></span>
         </div>
     </footer>
 
@@ -236,6 +431,589 @@
         n.style.cssText=v?'':'display:flex;flex-direction:column;position:absolute;top:64px;left:0;right:0;background:var(--color-bg);padding:16px 24px;border-bottom:1px solid var(--color-border)';
         a.style.cssText=v?'':'display:flex;position:absolute;top:'+(n.offsetHeight+64)+'px;left:0;right:0;padding:0 24px 16px;background:var(--color-bg)';
     });
+    </script>
+
+    <!-- Account & Token Modal -->
+    <div class="modal-overlay" id="accountModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modalTitle">Mon compte</h2>
+                <button class="modal-close" onclick="VinApp.closeModal()" aria-label="Fermer">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 5l10 10M15 5L5 15"/></svg>
+                </button>
+            </div>
+            <div class="modal-tabs" id="modalTabs">
+                <button class="modal-tab active" data-tab="register" onclick="VinApp.switchTab('register')">Cr&eacute;er un compte</button>
+                <button class="modal-tab" data-tab="dashboard" onclick="VinApp.switchTab('dashboard')">Tableau de bord</button>
+            </div>
+            <div class="modal-body">
+                <!-- Tab: Registration -->
+                <div class="tab-content active" id="tab-register">
+                    <div class="form-success" id="registerSuccess"></div>
+                    <form id="registerForm" onsubmit="return VinApp.createAccount(event)">
+                        <div class="form-group">
+                            <label class="form-label" for="regName">Nom complet</label>
+                            <input class="form-input" type="text" id="regName" placeholder="Jean Dupont" required autocomplete="name">
+                            <div class="form-error" id="errName"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="regEmail">Adresse e-mail</label>
+                            <input class="form-input" type="email" id="regEmail" placeholder="jean@example.com" required autocomplete="email">
+                            <div class="form-error" id="errEmail"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">T&eacute;l&eacute;phone international</label>
+                            <div class="phone-row">
+                                <select class="form-select" id="regPhoneCode">
+                                    <option value="+1">&#127482;&#127480; +1</option>
+                                    <option value="+7">&#127479;&#127482; +7</option>
+                                    <option value="+20">&#127466;&#127468; +20</option>
+                                    <option value="+27">&#127487;&#127462; +27</option>
+                                    <option value="+30">&#127468;&#127479; +30</option>
+                                    <option value="+31">&#127475;&#127473; +31</option>
+                                    <option value="+32">&#127463;&#127466; +32</option>
+                                    <option value="+33" selected>&#127467;&#127479; +33</option>
+                                    <option value="+34">&#127466;&#127480; +34</option>
+                                    <option value="+36">&#127469;&#127482; +36</option>
+                                    <option value="+39">&#127470;&#127481; +39</option>
+                                    <option value="+41">&#127464;&#127469; +41</option>
+                                    <option value="+44">&#127468;&#127463; +44</option>
+                                    <option value="+45">&#127465;&#127472; +45</option>
+                                    <option value="+46">&#127480;&#127466; +46</option>
+                                    <option value="+47">&#127475;&#127476; +47</option>
+                                    <option value="+48">&#127477;&#127473; +48</option>
+                                    <option value="+49">&#127465;&#127466; +49</option>
+                                    <option value="+51">&#127477;&#127466; +51</option>
+                                    <option value="+52">&#127474;&#127485; +52</option>
+                                    <option value="+54">&#127462;&#127479; +54</option>
+                                    <option value="+55">&#127463;&#127479; +55</option>
+                                    <option value="+56">&#127464;&#127473; +56</option>
+                                    <option value="+57">&#127464;&#127476; +57</option>
+                                    <option value="+60">&#127474;&#127486; +60</option>
+                                    <option value="+61">&#127462;&#127482; +61</option>
+                                    <option value="+62">&#127470;&#127465; +62</option>
+                                    <option value="+63">&#127477;&#127469; +63</option>
+                                    <option value="+65">&#127480;&#127468; +65</option>
+                                    <option value="+81">&#127471;&#127477; +81</option>
+                                    <option value="+82">&#127472;&#127479; +82</option>
+                                    <option value="+86">&#127464;&#127475; +86</option>
+                                    <option value="+90">&#127481;&#127479; +90</option>
+                                    <option value="+91">&#127470;&#127475; +91</option>
+                                    <option value="+212">&#127474;&#127462; +212</option>
+                                    <option value="+213">&#127465;&#127487; +213</option>
+                                    <option value="+216">&#127481;&#127475; +216</option>
+                                    <option value="+221">&#127480;&#127475; +221</option>
+                                    <option value="+225">&#127464;&#127470; +225</option>
+                                    <option value="+234">&#127475;&#127468; +234</option>
+                                    <option value="+237">&#127464;&#127474; +237</option>
+                                    <option value="+243">&#127464;&#127465; +243</option>
+                                    <option value="+254">&#127472;&#127466; +254</option>
+                                    <option value="+351">&#127477;&#127481; +351</option>
+                                    <option value="+352">&#127473;&#127482; +352</option>
+                                    <option value="+353">&#127470;&#127466; +353</option>
+                                    <option value="+358">&#127467;&#127470; +358</option>
+                                    <option value="+420">&#127464;&#127487; +420</option>
+                                    <option value="+966">&#127480;&#127462; +966</option>
+                                    <option value="+971">&#127462;&#127466; +971</option>
+                                </select>
+                                <input class="form-input" type="tel" id="regPhone" placeholder="6 12 34 56 78" required autocomplete="tel-national">
+                            </div>
+                            <div class="form-error" id="errPhone"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="regDomain">Domaine d&#39;application</label>
+                            <select class="form-select" id="regDomain" required>
+                                <option value="">S&eacute;lectionnez un domaine&hellip;</option>
+                                <option value="concessionnaire">Concessionnaire automobile</option>
+                                <option value="assurance">Assurance</option>
+                                <option value="ecommerce">E-commerce automobile</option>
+                                <option value="location">Location de v&eacute;hicules</option>
+                                <option value="logistique">Logistique &amp; transport</option>
+                                <option value="fintech">Fintech / Cr&eacute;dit auto</option>
+                                <option value="inspection">Inspection &amp; contr&ocirc;le technique</option>
+                                <option value="marketplace">Marketplace C2C / B2C</option>
+                                <option value="saas">SaaS / Int&eacute;grateur</option>
+                                <option value="autre">Autre</option>
+                            </select>
+                            <div class="form-error" id="errDomain"></div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width:100%;margin-top:8px">Cr&eacute;er mon compte &amp; g&eacute;n&eacute;rer ma cl&eacute; API</button>
+                    </form>
+                </div>
+                <!-- Tab: Dashboard -->
+                <div class="tab-content" id="tab-dashboard">
+                    <div id="dashContent">
+                        <div class="empty-state" id="dashEmpty">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 6v4m0 4h.01"/></svg>
+                            <p>Aucun compte. Cr&eacute;ez-en un pour commencer.</p>
+                        </div>
+                        <div id="dashAccount" style="display:none">
+                            <div class="dash-account">
+                                <div class="dash-account-row"><span>Nom</span><span id="dashName"></span></div>
+                                <div class="dash-account-row"><span>Email</span><span id="dashEmail"></span></div>
+                                <div class="dash-account-row"><span>T&eacute;l&eacute;phone</span><span id="dashPhone"></span></div>
+                                <div class="dash-account-row"><span>Domaine</span><span id="dashDomain"></span></div>
+                                <div class="dash-account-row"><span>Membre depuis</span><span id="dashDate"></span></div>
+                            </div>
+                            <div class="dash-section-title">
+                                Cl&eacute;s API
+                                <button class="btn-sm btn-primary" onclick="VinApp.generateToken()">+ Nouveau token</button>
+                            </div>
+                            <div class="token-list" id="tokenList"></div>
+                            <button class="btn btn-secondary btn-logout" onclick="VinApp.logout()">D&eacute;connexion</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <script>
+    const VinApp = (() => {
+        const STORAGE_KEY = 'vincipher_data';
+        const DOMAIN_LABELS = {
+            concessionnaire: 'Concessionnaire automobile',
+            assurance: 'Assurance',
+            ecommerce: 'E-commerce automobile',
+            location: 'Location de v\u00e9hicules',
+            logistique: 'Logistique & transport',
+            fintech: 'Fintech / Cr\u00e9dit auto',
+            inspection: 'Inspection & contr\u00f4le technique',
+            marketplace: 'Marketplace C2C / B2C',
+            saas: 'SaaS / Int\u00e9grateur',
+            autre: 'Autre'
+        };
+
+        function loadData() {
+            try {
+                return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { accounts: [], currentAccountId: null };
+            } catch { return { accounts: [], currentAccountId: null }; }
+        }
+
+        function saveData(data) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        function currentAccount() {
+            const data = loadData();
+            if (!data.currentAccountId) return null;
+            return data.accounts.find(a => a.id === data.currentAccountId) || null;
+        }
+
+        function uuid() {
+            return crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                const r = Math.random() * 16 | 0;
+                return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+            });
+        }
+
+        function generateApiKey() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let key = 'vc_live_';
+            for (let i = 0; i < 40; i++) key += chars.charAt(Math.floor(Math.random() * chars.length));
+            return key;
+        }
+
+        function formatDate(iso) {
+            return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+
+        function showToast(msg) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.classList.add('visible');
+            setTimeout(() => el.classList.remove('visible'), 3000);
+        }
+
+        function clearErrors() {
+            document.querySelectorAll('.form-error').forEach(e => { e.textContent = ''; e.classList.remove('visible'); });
+        }
+
+        function showError(id, msg) {
+            const el = document.getElementById(id);
+            if (el) { el.textContent = msg; el.classList.add('visible'); }
+        }
+
+        function openModal() {
+            const overlay = document.getElementById('accountModal');
+            overlay.classList.add('active');
+            const acct = currentAccount();
+            if (acct) {
+                switchTab('dashboard');
+            } else {
+                switchTab('register');
+            }
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('accountModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.modal-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            const target = document.getElementById('tab-' + tab);
+            if (target) target.classList.add('active');
+            if (tab === 'dashboard') renderDashboard();
+        }
+
+        function createAccount(e) {
+            e.preventDefault();
+            clearErrors();
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const phoneCode = document.getElementById('regPhoneCode').value;
+            const phoneNum = document.getElementById('regPhone').value.trim().replace(/\s+/g, '');
+            const domain = document.getElementById('regDomain').value;
+
+            let valid = true;
+            if (name.length < 2) { showError('errName', 'Le nom doit contenir au moins 2 caract\u00e8res.'); valid = false; }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('errEmail', 'Adresse e-mail invalide.'); valid = false; }
+            if (!/^\d{4,15}$/.test(phoneNum)) { showError('errPhone', 'Num\u00e9ro invalide (4 \u00e0 15 chiffres).'); valid = false; }
+            if (!domain) { showError('errDomain', 'Veuillez s\u00e9lectionner un domaine.'); valid = false; }
+            if (!valid) return false;
+
+            const data = loadData();
+            const existing = data.accounts.find(a => a.email.toLowerCase() === email.toLowerCase());
+            if (existing) {
+                data.currentAccountId = existing.id;
+                saveData(data);
+                showToast('Bon retour ! Connexion avec le compte existant.');
+                switchTab('dashboard');
+                return false;
+            }
+
+            const now = new Date().toISOString();
+            const account = {
+                id: uuid(),
+                name,
+                email,
+                phone: phoneCode + phoneNum,
+                phoneCode,
+                phoneNumber: phoneNum,
+                domain,
+                tokens: [{
+                    id: uuid(),
+                    key: generateApiKey(),
+                    name: 'Cl\u00e9 par d\u00e9faut',
+                    createdAt: now,
+                    active: true
+                }],
+                createdAt: now
+            };
+
+            data.accounts.push(account);
+            data.currentAccountId = account.id;
+            saveData(data);
+
+            document.getElementById('registerForm').reset();
+            const successEl = document.getElementById('registerSuccess');
+            successEl.innerHTML = '\u2705 Compte cr\u00e9\u00e9 ! Votre cl\u00e9 API a \u00e9t\u00e9 g\u00e9n\u00e9r\u00e9e.';
+            successEl.classList.add('visible');
+            setTimeout(() => { successEl.classList.remove('visible'); switchTab('dashboard'); }, 1500);
+            return false;
+        }
+
+        function renderDashboard() {
+            const acct = currentAccount();
+            const emptyEl = document.getElementById('dashEmpty');
+            const acctEl = document.getElementById('dashAccount');
+            if (!acct) {
+                emptyEl.style.display = '';
+                acctEl.style.display = 'none';
+                return;
+            }
+            emptyEl.style.display = 'none';
+            acctEl.style.display = '';
+            document.getElementById('dashName').textContent = acct.name;
+            document.getElementById('dashEmail').textContent = acct.email;
+            document.getElementById('dashPhone').textContent = acct.phone;
+            document.getElementById('dashDomain').textContent = DOMAIN_LABELS[acct.domain] || acct.domain;
+            document.getElementById('dashDate').textContent = formatDate(acct.createdAt);
+            renderTokens(acct);
+        }
+
+        function renderTokens(acct) {
+            const list = document.getElementById('tokenList');
+            if (!acct.tokens.length) {
+                list.innerHTML = '<div class="empty-state"><p>Aucun token. G\u00e9n\u00e9rez votre premi\u00e8re cl\u00e9 API.</p></div>';
+                return;
+            }
+            list.innerHTML = acct.tokens.map(t => `
+                <div class="token-card">
+                    <div class="token-card-header">
+                        <span class="token-card-name">${esc(t.name)}</span>
+                        <span class="token-card-badge ${t.active ? 'active' : 'revoked'}">${t.active ? 'Actif' : 'R\u00e9voqu\u00e9'}</span>
+                    </div>
+                    <div class="token-key">
+                        <code>${t.active ? esc(t.key) : '\u2022'.repeat(24)}</code>
+                        ${t.active ? `<button class="btn-sm btn-ghost" onclick="VinApp.copyToken('${esc(t.key)}')">Copier</button>` : ''}
+                    </div>
+                    <div class="token-meta">Cr\u00e9\u00e9 le ${formatDate(t.createdAt)}</div>
+                    ${t.active ? `<div class="token-actions"><button class="btn-sm btn-danger" onclick="VinApp.revokeToken('${t.id}')">R\u00e9voquer</button></div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+        function generateToken() {
+            const data = loadData();
+            const acct = data.accounts.find(a => a.id === data.currentAccountId);
+            if (!acct) return;
+            const activeCount = acct.tokens.filter(t => t.active).length;
+            if (activeCount >= 5) { showToast('Maximum 5 tokens actifs par compte.'); return; }
+            acct.tokens.push({
+                id: uuid(),
+                key: generateApiKey(),
+                name: `Cl\u00e9 #${acct.tokens.length + 1}`,
+                createdAt: new Date().toISOString(),
+                active: true
+            });
+            saveData(data);
+            renderDashboard();
+            showToast('Nouveau token g\u00e9n\u00e9r\u00e9.');
+        }
+
+        function revokeToken(tokenId) {
+            const data = loadData();
+            const acct = data.accounts.find(a => a.id === data.currentAccountId);
+            if (!acct) return;
+            const token = acct.tokens.find(t => t.id === tokenId);
+            if (token) {
+                token.active = false;
+                token.revokedAt = new Date().toISOString();
+                saveData(data);
+                renderDashboard();
+                showToast('Token r\u00e9voqu\u00e9.');
+            }
+        }
+
+        function copyToken(key) {
+            navigator.clipboard.writeText(key).then(() => showToast('Cl\u00e9 API copi\u00e9e.')).catch(() => {
+                const ta = document.createElement('textarea'); ta.value = key; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+                showToast('Cl\u00e9 API copi\u00e9e.');
+            });
+        }
+
+        function logout() {
+            const data = loadData();
+            data.currentAccountId = null;
+            saveData(data);
+            closeModal();
+            showToast('D\u00e9connexion effectu\u00e9e.');
+        }
+
+        // Close modal on overlay click
+        document.getElementById('accountModal')?.addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        // Close modal on Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // Update navbar on load if logged in
+        (function initNav() {
+            const acct = currentAccount();
+            const navActions = document.querySelector('.navbar-actions');
+            if (acct && navActions) {
+                navActions.innerHTML = `<button class="btn btn-secondary" onclick="VinApp.openModal()" style="padding:8px 18px;font-size:14px">${esc(acct.name.split(' ')[0])}</button>`;
+            }
+        })();
+
+        return { openModal, closeModal, switchTab, createAccount, generateToken, revokeToken, copyToken, logout };
+    })();
+
+    const VinDecode = (() => {
+        const PRETTY_LABELS = {
+            make: 'Marque', model: 'Mod\u00e8le', model_year: 'Ann\u00e9e', trim_level: 'Finition',
+            body_style: 'Carrosserie', body_type: 'Type', fuel_type: 'Carburant', transmission: 'Transmission',
+            manufactured_in: 'Fabriqu\u00e9 \u00e0', manufacturer: 'Constructeur', country: 'Pays', region: 'R\u00e9gion',
+            vehicule_type: 'Type de v\u00e9hicule', driveline: 'Transmission', number_of_doors: 'Portes',
+            number_of_seats: 'Si\u00e8ges', displacement_si: 'Cylindr\u00e9e (cc)', displacement_nominal: 'Cylindr\u00e9e (L)',
+            engine_head: 'Configuration moteur', engine_cylinders: 'Cylindres', engine_horse_power: 'Puissance (ch)',
+            engine_kilo_watts: 'Puissance (kW)', engine_aspiration: 'Aspiration', manual_gearbox: 'Bo\u00eete manuelle'
+        };
+
+        const HERO_KEYS = ['make', 'model', 'model_year'];
+        const PRIORITY_KEYS = [
+            'make', 'model', 'model_year', 'trim_level', 'body_style', 'fuel_type',
+            'transmission', 'engine_horse_power', 'engine_cylinders', 'displacement_nominal',
+            'country', 'manufactured_in', 'manufacturer', 'number_of_doors', 'number_of_seats',
+            'driveline', 'vehicule_type'
+        ];
+
+        /* Challenge generator — split secret reassembled at runtime */
+        const _0x4a = [118,49,78,99,33,112,72,51,114,95];
+        const _0x4b = [112,76,52,121,71,114,48,117,78,100];
+        const _0x4c = [95,36,101,99,82,101,84,95,50,48,50,53,35,120,57,75,122];
+        function _xK(){return new Uint8Array([..._0x4a,..._0x4b,..._0x4c]);}
+        const _enc = new TextEncoder();
+        async function _cS(v,t){
+            const k = await crypto.subtle.importKey('raw',_xK(),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+            const d = _enc.encode(v+'|'+t);
+            const b = await crypto.subtle.sign('HMAC',k,d);
+            return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+        }
+
+        function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+        function setState(state) {
+            document.getElementById('decodeLoading').classList.toggle('visible', state === 'loading');
+            document.getElementById('decodeError').classList.toggle('visible', state === 'error');
+            document.getElementById('decodeResult').classList.toggle('visible', state === 'result');
+        }
+
+        function fill(vin) {
+            document.getElementById('decodeVin').value = vin;
+            document.getElementById('decodeVin').focus();
+        }
+
+        async function decode(e) {
+            e.preventDefault();
+            const vinInput = document.getElementById('decodeVin');
+            const vin = vinInput.value.trim().toUpperCase();
+
+            if (vin.length !== 17) {
+                showError('Le VIN doit contenir exactement 17 caract\u00e8res.', `VIN saisi : ${vin} (${vin.length} caract\u00e8res)`);
+                return false;
+            }
+            if (/[OQI]/.test(vin)) {
+                showError('Le VIN ne peut pas contenir les lettres O, Q ou I.', 'Ces lettres sont interdites dans le standard VIN (ISO 3779).');
+                return false;
+            }
+
+            setState('loading');
+            document.getElementById('loadingVin').textContent = vin;
+            const startTime = performance.now();
+
+            try {
+                const t = Math.floor(Date.now() / 1000);
+                const s = await _cS(vin, t);
+                const url = `/api/Playground/decode?vin=${encodeURIComponent(vin)}&t=${t}&s=${s}`;
+                const res = await fetch(url);
+                const elapsed = Math.round(performance.now() - startTime);
+
+                const remaining = res.headers.get('X-RateLimit-Remaining');
+                updateQuota(remaining);
+
+                if (res.status === 429) {
+                    const err = await res.json().catch(() => null);
+                    showError(
+                        err?.error || 'Limite atteinte',
+                        err?.message || 'Vous avez atteint la limite de d\u00e9codages gratuits.',
+                        true
+                    );
+                    return false;
+                }
+
+                if (res.status === 403) {
+                    showError('Acc\u00e8s refus\u00e9', 'Cette requ\u00eate n\u2019est pas autoris\u00e9e.');
+                    return false;
+                }
+
+                if (!res.ok) {
+                    const body = await res.text();
+                    if (res.status === 404) {
+                        showError('V\u00e9hicule non trouv\u00e9.', `Aucune donn\u00e9e pour le VIN ${vin}. Il est peut-\u00eatre invalide.`);
+                    } else {
+                        showError(`Erreur ${res.status}`, body || 'Une erreur inattendue est survenue.');
+                    }
+                    return false;
+                }
+
+                const data = await res.json();
+                renderResult(vin, data, elapsed);
+            } catch (err) {
+                showError('Erreur r\u00e9seau', 'Impossible de contacter le serveur. V\u00e9rifiez votre connexion.');
+            }
+            return false;
+        }
+
+        function showError(msg, detail, showCta) {
+            document.getElementById('decodeErrorMsg').textContent = msg;
+            document.getElementById('decodeErrorDetail').textContent = detail || '';
+            document.getElementById('decodeErrorCta').style.display = showCta ? '' : 'none';
+            setState('error');
+        }
+
+        function updateQuota(remaining) {
+            const el = document.getElementById('playgroundQuota');
+            if (remaining !== null && remaining !== undefined) {
+                const n = parseInt(remaining, 10);
+                el.innerHTML = `D\u00e9codages restants aujourd\u2019hui : <strong>${n}</strong>`;
+            }
+        }
+
+        function renderResult(vin, data, elapsed) {
+            const make = data.make || data.Make || '';
+            const model = data.model || data.Model || '';
+            const year = data.model_year || data.Model_Year || '';
+
+            document.getElementById('resultMake').textContent = make || 'Constructeur inconnu';
+            document.getElementById('resultModel').textContent = [model, year].filter(Boolean).join(' \u2014 ');
+            document.getElementById('resultVin').textContent = vin;
+            document.getElementById('resultTimerValue').textContent = `${elapsed}ms`;
+
+            // Filter out meta keys for display
+            const META_KEYS = ['_demo', '_remaining'];
+            const displayKeys = Object.keys(data).filter(k => !META_KEYS.includes(k));
+
+            document.getElementById('resultBadgeText').textContent = `Aper\u00e7u \u2014 ${displayKeys.length} champs`;
+
+            const specsEl = document.getElementById('resultSpecs');
+            const sortedKeys = sortKeys(displayKeys);
+            specsEl.innerHTML = sortedKeys
+                .filter(k => !HERO_KEYS.includes(k))
+                .map(k => `<div class="vehicle-spec"><div class="vehicle-spec-label">${esc(PRETTY_LABELS[k] || formatKey(k))}</div><div class="vehicle-spec-value">${esc(data[k])}</div></div>`)
+                .join('');
+
+            // Show upsell if truncated
+            const upsellEl = document.getElementById('resultUpsell');
+            if (data._demo) {
+                upsellEl.style.display = '';
+                document.getElementById('upsellMsg').textContent = data._demo;
+            } else {
+                upsellEl.style.display = 'none';
+            }
+
+            document.getElementById('rawJsonPre').textContent = JSON.stringify(data, null, 2);
+            document.getElementById('rawJson').classList.remove('visible');
+            document.getElementById('rawToggle').classList.remove('open');
+
+            setState('result');
+        }
+
+        function sortKeys(keys) {
+            const priority = [];
+            const rest = [];
+            for (const k of PRIORITY_KEYS) {
+                if (keys.includes(k)) priority.push(k);
+            }
+            for (const k of keys) {
+                if (!PRIORITY_KEYS.includes(k)) rest.push(k);
+            }
+            return [...priority, ...rest.sort()];
+        }
+
+        function formatKey(key) {
+            return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        }
+
+        function toggleRaw() {
+            const raw = document.getElementById('rawJson');
+            const btn = document.getElementById('rawToggle');
+            raw.classList.toggle('visible');
+            btn.classList.toggle('open');
+        }
+
+        return { decode, fill, toggleRaw };
+    })();
     </script>
 </body>
 </html>

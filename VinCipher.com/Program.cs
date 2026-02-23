@@ -36,6 +36,28 @@ builder.Services.AddHttpClient<BaseApiProviderClient<CarBase>, VincarioApiClient
 builder.Services.AddHttpClient<BaseApiProviderClient<CarBase>, VinAuditApiClient>();
 
 builder.Services.AddHttpClient<IHttpConsumtionServices, DecodedCarBaseService>();
+
+builder.Services.AddSingleton(_ =>
+{
+    var playground = configuration.GetSection("Playground");
+    return new PlaygroundRateLimiter(
+        playground.GetValue("MaxPerMinute", 5),
+        playground.GetValue("MaxPerDay", 20));
+});
+
+builder.Services.AddSingleton(_ =>
+{
+    var maxPerDay = configuration.GetValue("VinDecoder:MaxPerDay", 50);
+    return new VinDecoderRateLimiter(maxPerDay);
+});
+
+builder.Services.AddSingleton(_ =>
+{
+    var secret = configuration["Playground:HmacSecret"]
+        ?? throw new InvalidOperationException("Playground:HmacSecret is not configured.");
+    return new PlaygroundChallenge(secret);
+});
+
 builder.Services.AddControllers();
 
 // Learn more about configuring OpenAPI at https://learn.microsoft.com/aspnet/core/fundamentals/openapi
@@ -66,6 +88,9 @@ app.UseStaticFiles(new StaticFileOptions
         if (ctx.File.Name.EndsWith(".html"))
         {
             ctx.Context.Response.ContentType = "text/html; charset=utf-8";
+            ctx.Context.Response.Headers.CacheControl = "no-cache, no-store, must-revalidate";
+            ctx.Context.Response.Headers.Pragma = "no-cache";
+            ctx.Context.Response.Headers.Expires = "0";
         }
     }
 });

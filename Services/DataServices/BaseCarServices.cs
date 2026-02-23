@@ -37,10 +37,10 @@ namespace Services.DataServices
             }
             var vinToSearch = carVin.Substring(0, limit);            
             var ourValuecar = _Repository.CarsBases.FirstOrDefault(c => c.Vin.StartsWith(vinToSearch) );
-            
-            if(ourValuecar != null && ourValuecar.HermesMarketValue != 0)
+
+            if(ourValuecar != null && ourValuecar.MarketValue != 0)
             {
-                return ourValuecar.HermesMarketValue;
+                return ourValuecar.MarketValue;
             }
             
             car = _Repository.Cars.FirstOrDefault(c => c.Vin.StartsWith(vinToSearch));            

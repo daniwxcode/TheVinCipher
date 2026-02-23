@@ -2,8 +2,6 @@
 
 using Flurl.Http;
 
-using VinCipher.Model;
-
 using Infrastructure.Contexts;
 
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +10,8 @@ using Services.DataServices;
 using Services.Interfaces;
 
 using System.Text.RegularExpressions;
+
+using VinCipher.Model;
 
 namespace VinCipher.Controllers;
 
@@ -23,12 +23,14 @@ public class VinDecoderController : ControllerBase
     private readonly TokensProvider tokenProvider;
     private readonly VinCipherContext _context;
     private readonly ICrudServices _requestsbase;
-    public VinDecoderController(TokensProvider tokensProvider, VinRushScrapper vinRushScrapper, VinCipherContext context, ICrudServices crudServices)
+    private readonly VinDecoderRateLimiter _rateLimiter;
+    public VinDecoderController(TokensProvider tokensProvider, VinRushScrapper vinRushScrapper, VinCipherContext context, ICrudServices crudServices, VinDecoderRateLimiter rateLimiter)
     {
         this.vinRushScrapper = vinRushScrapper;
         tokenProvider = tokensProvider;
         _context = context;
         _requestsbase = crudServices;
+        _rateLimiter = rateLimiter;
     }
     /// <summary>
     /// 
@@ -51,6 +53,15 @@ public class VinDecoderController : ControllerBase
         {
             return Unauthorized(new MarketValueResponse("Token Invalid"));
         }
+
+        var (allowed, remainingDaily, retryAfter) = _rateLimiter.TryAcquire(token);
+        if (!allowed)
+        {
+            Response.Headers["Retry-After"] = retryAfter.ToString();
+            return StatusCode(StatusCodes.Status429TooManyRequests,
+                new { message = "Daily limit of 50 decode requests reached.", retryAfterSeconds = retryAfter });
+        }
+
         if (vin.Contains("O") || vin.Contains("Q") || vin.Contains("I"))
         {
             var message = $"Vin Incorect: {vin}";

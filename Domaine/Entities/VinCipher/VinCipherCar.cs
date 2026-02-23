@@ -107,11 +107,11 @@ namespace Domaine.Entities.VinCipher
                 DecodedValues=JsonConvert.DeserializeObject<Dictionary<string,string>>(value)??new Dictionary<string,string>();
             }
         }
-        public HermesCar()
+        public VinCipherCar()
         {
-
+            
         }
-        public HermesCar(Dictionary<string,string> decode,string vin)
+        public VinCipherCar(Dictionary<string,string> decode,string vin)
         {
             VIN = vin;
             DecodedValues=decode;

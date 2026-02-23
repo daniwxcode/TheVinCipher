@@ -17,9 +17,9 @@ namespace Services.DataServices
     {
 
         private readonly IScrappableSource source;
-        private readonly HermesContext _dbContext;
+        private readonly VinCipherContext _dbContext;
         public string Vin { get; set; }
-        public VinRushScrapper (IScrappableSource scrappableSource, HermesContext context)
+        public VinRushScrapper (IScrappableSource scrappableSource, VinCipherContext context)
         {
             this.source = scrappableSource;
             this._dbContext = context;
@@ -38,17 +38,25 @@ namespace Services.DataServices
             doc.LoadHtml(page);
             var result = new Dictionary<string, string>();
             var htables = doc.DocumentNode.SelectNodes("//table");
+            if (htables == null)
+            {
+                return result; // retourner le dictionnaire vide
+            }
             foreach (HtmlNode htable in htables)
             {
-                var htr = htable.SelectNodes("tbody").FirstOrDefault().
-                SelectNodes("tr")
-                .Where(tr => tr.SelectNodes("td").Count() > 1);
+                var tbody = htable.SelectNodes("tbody")?.FirstOrDefault();
+                if (tbody == null) continue;
+                var htr = tbody.SelectNodes("tr")
+                ?.Where(tr => tr.SelectNodes("td")?.Count() > 1);
+                if (htr == null) continue;
                 foreach (HtmlNode row in htr)
                 {
+                    var cells = row.SelectNodes("td");
+                    if (cells == null || cells.Count < 2) continue;
                     var tmp = new List<string>();
 
                     int i = 0;
-                    foreach (HtmlNode cell in row.SelectNodes("td"))
+                    foreach (HtmlNode cell in cells)
                     {
                         if(i==0)
                         tmp.Add(Regex.Replace(cell.InnerText, @"[^0-9a-zA-Z:, /]+", "").Trim());
@@ -59,7 +67,9 @@ namespace Services.DataServices
                     }
                     if (tmp[0] == "Image")
                     {
-                        tmp[1] = row.SelectNodes("//td//img").FirstOrDefault().GetAttributeValue("src", "");
+                        var imgNode = row.SelectNodes("//td//img")?.FirstOrDefault();
+                        if (imgNode != null)
+                            tmp[1] = imgNode.GetAttributeValue("src", "");
 
                     }
                     result.TryAdd(tmp[0].Underscore(), tmp[1]);

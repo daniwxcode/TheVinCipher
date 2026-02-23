@@ -46,7 +46,7 @@ namespace Infrastructure.APIs.VinAudit.Services
                 Trim = VinAuditResponse.Attributes.Trim,
                 Engine = VinAuditResponse.Attributes.Engine,
                 ManufacturerSuggestedRetailPrice = VinAuditResponse.Attributes.ManufacturerSuggestedRetailPrice,
-                HermesMarketValue = 0
+                MarketValue = 0
             };
             int t=0;
             int.TryParse(VinAuditResponse.Attributes.Doors, out t);
