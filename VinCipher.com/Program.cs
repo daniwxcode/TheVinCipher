@@ -25,6 +25,8 @@ builder.Services.AddDbContext<VinCipherContext>(option =>
     option.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
 
 });
+builder.Services.AddDbContext<PlaygroundDbContext>(options =>
+    options.UseSqlite("Data Source=playground.db"));
 builder.Services.AddSingleton<BaseApiProvider, VincarioProvider>(_ => new VincarioProvider(configuration));
 builder.Services.AddSingleton<BaseApiProvider, VinAuditProvider>(_ => new VinAuditProvider(configuration));
 builder.Services.AddScoped<VinRushScrapper>();
@@ -64,6 +66,34 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var pgDb = scope.ServiceProvider.GetRequiredService<PlaygroundDbContext>();
+    pgDb.Database.EnsureCreated();
+
+    // Seed root admin if not present
+    if (!pgDb.AdminUsers.Any(a => a.IsRoot))
+    {
+        var rootUser = new VinCipher.Model.Playground.AdminUser
+        {
+            Id = Guid.NewGuid(),
+            Username = configuration["Admin:RootUsername"] ?? "root",
+            IsRoot = true
+        };
+        rootUser.SetPassword(configuration["Admin:RootPassword"] ?? "VinCipher@Admin2025!");
+        pgDb.AdminUsers.Add(rootUser);
+        pgDb.SaveChanges();
+    }
+
+    // Reload active playground tokens into in-memory TokensProvider
+    var tokensProvider = scope.ServiceProvider.GetRequiredService<TokensProvider>();
+    var activeTokens = pgDb.ApiTokens
+        .Where(t => t.IsActive && t.ExpiresAtUtc > DateTime.UtcNow)
+        .ToList();
+    foreach (var t in activeTokens)
+        tokensProvider.AddPlaygroundToken(t.Key, t.ExpiresAtUtc);
+}
 
 // Configure the HTTP request pipeline.
 //if (app.Environment.IsDevelopment())

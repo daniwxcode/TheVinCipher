@@ -10,6 +10,7 @@ namespace VinCipher.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[ApiExplorerSettings(IgnoreApi = true)]
 public class MarketValueController : ControllerBase
 {
     private readonly ICarService _carService;

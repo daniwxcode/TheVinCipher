@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System.Security.Cryptography;
+
+using Microsoft.Extensions.Configuration;
 
 namespace VinCipher.Model
 {
@@ -31,6 +33,7 @@ namespace VinCipher.Model
     public class TokensProvider
     {
         private readonly ConfigurationManager _configurationManager;
+
         public TokensProvider (ConfigurationManager configurationManager)
         {
             _configurationManager = configurationManager;
@@ -49,6 +52,18 @@ namespace VinCipher.Model
             return tokenInfo != null && !tokenInfo.IsExpired();
         }
 
-
+        /// <summary>
+        /// Registers a playground-generated token in the in-memory token list
+        /// so that VinDecoderController can validate it.
+        /// </summary>
+        public void AddPlaygroundToken(string key, DateTime expiresAtUtc)
+        {
+            Tokens.Add(new TokenInfo
+            {
+                Token = key,
+                AllowedFunctions = [AllowedFunction.Decode],
+                DateLimite = expiresAtUtc
+            });
+        }
     }
 }

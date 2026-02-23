@@ -420,6 +420,7 @@
                 <li><a href="/scalar/v1">API</a></li>
                 <li><a href="#">Tarifs</a></li>
                 <li><a href="#">Contact</a></li>
+                <li><a href="/admin.html">Admin</a></li>
             </ul>
             <span class="footer-tech"><span class="footer-tech-badge">SaaS</span></span>
         </div>
@@ -555,11 +556,15 @@
                                 <div class="dash-account-row"><span>Domaine</span><span id="dashDomain"></span></div>
                                 <div class="dash-account-row"><span>Membre depuis</span><span id="dashDate"></span></div>
                             </div>
+                            <div class="dash-section-title">Statistiques</div>
+                            <div id="dashStats"></div>
                             <div class="dash-section-title">
                                 Cl&eacute;s API
                                 <button class="btn-sm btn-primary" onclick="VinApp.generateToken()">+ Nouveau token</button>
                             </div>
                             <div class="token-list" id="tokenList"></div>
+                            <div class="dash-section-title" style="margin-top:20px">Historique des requ&ecirc;tes</div>
+                            <div id="dashHistory"></div>
                             <button class="btn btn-secondary btn-logout" onclick="VinApp.logout()">D&eacute;connexion</button>
                         </div>
                     </div>
@@ -571,7 +576,7 @@
 
     <script>
     const VinApp = (() => {
-        const STORAGE_KEY = 'vincipher_data';
+        const TOKEN_KEY = 'vincipher_token';
         const DOMAIN_LABELS = {
             concessionnaire: 'Concessionnaire automobile',
             assurance: 'Assurance',
@@ -585,34 +590,26 @@
             autre: 'Autre'
         };
 
-        function loadData() {
-            try {
-                return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { accounts: [], currentAccountId: null };
-            } catch { return { accounts: [], currentAccountId: null }; }
-        }
+        function getToken() { return localStorage.getItem(TOKEN_KEY); }
+        function setToken(t) { localStorage.setItem(TOKEN_KEY, t); }
+        function clearToken() { localStorage.removeItem(TOKEN_KEY); }
+        function isLoggedIn() { return !!getToken(); }
 
-        function saveData(data) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        }
+        function authHeaders() { return { 'X-Api-Key': getToken() }; }
 
-        function currentAccount() {
-            const data = loadData();
-            if (!data.currentAccountId) return null;
-            return data.accounts.find(a => a.id === data.currentAccountId) || null;
-        }
-
-        function uuid() {
-            return crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-                const r = Math.random() * 16 | 0;
-                return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-            });
-        }
-
-        function generateApiKey() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            let key = 'vc_live_';
-            for (let i = 0; i < 40; i++) key += chars.charAt(Math.floor(Math.random() * chars.length));
-            return key;
+        /* Challenge generator \u2014 split secret reassembled at runtime */
+        const _0x4a = [118,49,78,99,33,112,72,51,114,95];
+        const _0x4b = [112,76,52,121,71,114,48,117,78,100];
+        const _0x4c = [95,36,101,99,82,101,84,95,50,48,50,53,35,120,57,75,122];
+        function _xK(){return new Uint8Array([..._0x4a,..._0x4b,..._0x4c]);}
+        const _enc = new TextEncoder();
+        async function hmacSign(payload){
+            const t = Math.floor(Date.now() / 1000);
+            const k = await crypto.subtle.importKey('raw',_xK(),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+            const d = _enc.encode(payload+'|'+t);
+            const b = await crypto.subtle.sign('HMAC',k,d);
+            const s = [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+            return {t,s};
         }
 
         function formatDate(iso) {
@@ -635,15 +632,11 @@
             if (el) { el.textContent = msg; el.classList.add('visible'); }
         }
 
+        function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
         function openModal() {
-            const overlay = document.getElementById('accountModal');
-            overlay.classList.add('active');
-            const acct = currentAccount();
-            if (acct) {
-                switchTab('dashboard');
-            } else {
-                switchTab('register');
-            }
+            document.getElementById('accountModal').classList.add('active');
+            if (isLoggedIn()) { switchTab('dashboard'); } else { switchTab('register'); }
             document.body.style.overflow = 'hidden';
         }
 
@@ -660,7 +653,7 @@
             if (tab === 'dashboard') renderDashboard();
         }
 
-        function createAccount(e) {
+        async function createAccount(e) {
             e.preventDefault();
             clearErrors();
             const name = document.getElementById('regName').value.trim();
@@ -676,120 +669,131 @@
             if (!domain) { showError('errDomain', 'Veuillez s\u00e9lectionner un domaine.'); valid = false; }
             if (!valid) return false;
 
-            const data = loadData();
-            const existing = data.accounts.find(a => a.email.toLowerCase() === email.toLowerCase());
-            if (existing) {
-                data.currentAccountId = existing.id;
-                saveData(data);
-                showToast('Bon retour ! Connexion avec le compte existant.');
-                switchTab('dashboard');
-                return false;
-            }
+            try {
+                const {t, s} = await hmacSign('register');
+                const res = await fetch(`/api/Playground/register?t=${t}&s=${s}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, phoneCode, phoneNumber: phoneNum, domain })
+                });
+                const data = await res.json();
+                if (!res.ok) { showToast(data.error || 'Erreur serveur'); return false; }
 
-            const now = new Date().toISOString();
-            const account = {
-                id: uuid(),
-                name,
-                email,
-                phone: phoneCode + phoneNum,
-                phoneCode,
-                phoneNumber: phoneNum,
-                domain,
-                tokens: [{
-                    id: uuid(),
-                    key: generateApiKey(),
-                    name: 'Cl\u00e9 par d\u00e9faut',
-                    createdAt: now,
-                    active: true
-                }],
-                createdAt: now
-            };
-
-            data.accounts.push(account);
-            data.currentAccountId = account.id;
-            saveData(data);
-
-            document.getElementById('registerForm').reset();
-            const successEl = document.getElementById('registerSuccess');
-            successEl.innerHTML = '\u2705 Compte cr\u00e9\u00e9 ! Votre cl\u00e9 API a \u00e9t\u00e9 g\u00e9n\u00e9r\u00e9e.';
-            successEl.classList.add('visible');
-            setTimeout(() => { successEl.classList.remove('visible'); switchTab('dashboard'); }, 1500);
+                setToken(data.token);
+                document.getElementById('registerForm').reset();
+                const successEl = document.getElementById('registerSuccess');
+                successEl.innerHTML = data.message
+                    ? '\u2705 ' + esc(data.message)
+                    : '\u2705 Compte cr\u00e9\u00e9 ! Votre cl\u00e9 API a \u00e9t\u00e9 g\u00e9n\u00e9r\u00e9e.';
+                successEl.classList.add('visible');
+                updateNavbar(name);
+                setTimeout(() => { successEl.classList.remove('visible'); switchTab('dashboard'); }, 1500);
+            } catch { showToast('Erreur r\u00e9seau.'); }
             return false;
         }
 
-        function renderDashboard() {
-            const acct = currentAccount();
+        async function renderDashboard() {
             const emptyEl = document.getElementById('dashEmpty');
             const acctEl = document.getElementById('dashAccount');
-            if (!acct) {
-                emptyEl.style.display = '';
-                acctEl.style.display = 'none';
-                return;
-            }
-            emptyEl.style.display = 'none';
-            acctEl.style.display = '';
-            document.getElementById('dashName').textContent = acct.name;
-            document.getElementById('dashEmail').textContent = acct.email;
-            document.getElementById('dashPhone').textContent = acct.phone;
-            document.getElementById('dashDomain').textContent = DOMAIN_LABELS[acct.domain] || acct.domain;
-            document.getElementById('dashDate').textContent = formatDate(acct.createdAt);
-            renderTokens(acct);
+            if (!isLoggedIn()) { emptyEl.style.display = ''; acctEl.style.display = 'none'; return; }
+
+            try {
+                const [meRes, statsRes, histRes] = await Promise.all([
+                    fetch('/api/Playground/me', { headers: authHeaders() }),
+                    fetch('/api/Playground/me/stats', { headers: authHeaders() }),
+                    fetch('/api/Playground/me/history?size=10', { headers: authHeaders() })
+                ]);
+
+                if (meRes.status === 401) { clearToken(); emptyEl.style.display = ''; acctEl.style.display = 'none'; return; }
+
+                const me = await meRes.json();
+                const stats = statsRes.ok ? await statsRes.json() : {};
+                const hist = histRes.ok ? await histRes.json() : { logs: [] };
+
+                emptyEl.style.display = 'none';
+                acctEl.style.display = '';
+                document.getElementById('dashName').textContent = me.name;
+                document.getElementById('dashEmail').textContent = me.email;
+                document.getElementById('dashPhone').textContent = me.phone;
+                document.getElementById('dashDomain').textContent = DOMAIN_LABELS[me.domain] || me.domain;
+                document.getElementById('dashDate').textContent = formatDate(me.createdAt);
+                updateNavbar(me.name);
+                renderTokens(me.tokens || []);
+                renderStats(stats);
+                renderHistory(hist.logs || []);
+            } catch { showToast('Erreur lors du chargement du dashboard.'); }
         }
 
-        function renderTokens(acct) {
+        function renderTokens(tokens) {
             const list = document.getElementById('tokenList');
-            if (!acct.tokens.length) {
+            if (!tokens.length) {
                 list.innerHTML = '<div class="empty-state"><p>Aucun token. G\u00e9n\u00e9rez votre premi\u00e8re cl\u00e9 API.</p></div>';
                 return;
             }
-            list.innerHTML = acct.tokens.map(t => `
+            list.innerHTML = tokens.map(t => `
                 <div class="token-card">
                     <div class="token-card-header">
                         <span class="token-card-name">${esc(t.name)}</span>
                         <span class="token-card-badge ${t.active ? 'active' : 'revoked'}">${t.active ? 'Actif' : 'R\u00e9voqu\u00e9'}</span>
                     </div>
                     <div class="token-key">
-                        <code>${t.active ? esc(t.key) : '\u2022'.repeat(24)}</code>
+                        <code>${esc(t.key)}</code>
                         ${t.active ? `<button class="btn-sm btn-ghost" onclick="VinApp.copyToken('${esc(t.key)}')">Copier</button>` : ''}
                     </div>
-                    <div class="token-meta">Cr\u00e9\u00e9 le ${formatDate(t.createdAt)}</div>
+                    <div class="token-meta">Cr\u00e9\u00e9 le ${formatDate(t.createdAt)}${t.expiresAt ? ' \u2014 Expire le ' + formatDate(t.expiresAt) : ''}</div>
                     ${t.active ? `<div class="token-actions"><button class="btn-sm btn-danger" onclick="VinApp.revokeToken('${t.id}')">R\u00e9voquer</button></div>` : ''}
                 </div>
             `).join('');
         }
 
-        function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
-
-        function generateToken() {
-            const data = loadData();
-            const acct = data.accounts.find(a => a.id === data.currentAccountId);
-            if (!acct) return;
-            const activeCount = acct.tokens.filter(t => t.active).length;
-            if (activeCount >= 5) { showToast('Maximum 5 tokens actifs par compte.'); return; }
-            acct.tokens.push({
-                id: uuid(),
-                key: generateApiKey(),
-                name: `Cl\u00e9 #${acct.tokens.length + 1}`,
-                createdAt: new Date().toISOString(),
-                active: true
-            });
-            saveData(data);
-            renderDashboard();
-            showToast('Nouveau token g\u00e9n\u00e9r\u00e9.');
+        function renderStats(stats) {
+            const el = document.getElementById('dashStats');
+            if (!el) return;
+            el.innerHTML = `
+                <div class="dash-account">
+                    <div class="dash-account-row"><span>Requ\u00eates aujourd\u2019hui</span><span>${stats.todayRequests ?? 0} / 50</span></div>
+                    <div class="dash-account-row"><span>Total requ\u00eates</span><span>${stats.totalRequests ?? 0}</span></div>
+                    <div class="dash-account-row"><span>Taux de succ\u00e8s</span><span>${stats.successRate ?? 0}%</span></div>
+                    <div class="dash-account-row"><span>Temps moyen</span><span>${stats.avgResponseTimeMs ?? 0}ms</span></div>
+                    <div class="dash-account-row"><span>Tokens actifs</span><span>${stats.activeTokens ?? 0}</span></div>
+                </div>
+            `;
         }
 
-        function revokeToken(tokenId) {
-            const data = loadData();
-            const acct = data.accounts.find(a => a.id === data.currentAccountId);
-            if (!acct) return;
-            const token = acct.tokens.find(t => t.id === tokenId);
-            if (token) {
-                token.active = false;
-                token.revokedAt = new Date().toISOString();
-                saveData(data);
+        function renderHistory(logs) {
+            const el = document.getElementById('dashHistory');
+            if (!el) return;
+            if (!logs.length) { el.innerHTML = '<div class="empty-state"><p>Aucune requ\u00eate pour le moment.</p></div>'; return; }
+            el.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;font-size:13px;border-collapse:collapse">
+                <thead><tr style="text-align:left;color:var(--color-text-muted);border-bottom:1px solid var(--color-border)">
+                    <th style="padding:8px">VIN</th><th style="padding:8px">Statut</th><th style="padding:8px">Temps</th><th style="padding:8px">Date</th>
+                </tr></thead>
+                <tbody>${logs.map(l => `<tr style="border-bottom:1px solid var(--color-border-subtle)">
+                    <td style="padding:8px;font-family:monospace">${esc(l.vin)}</td>
+                    <td style="padding:8px"><span style="color:${l.success ? '#4ade80' : '#ef4444'}">${l.statusCode}</span></td>
+                    <td style="padding:8px">${l.responseTimeMs}ms</td>
+                    <td style="padding:8px">${new Date(l.timestamp).toLocaleString('fr-FR')}</td>
+                </tr>`).join('')}</tbody></table></div>`;
+        }
+
+        async function generateToken() {
+            if (!isLoggedIn()) return;
+            try {
+                const res = await fetch('/api/Playground/generate-token', { method: 'POST', headers: authHeaders() });
+                const data = await res.json();
+                if (!res.ok) { showToast(data.error || 'Erreur'); return; }
+                showToast('Nouveau token g\u00e9n\u00e9r\u00e9.');
                 renderDashboard();
-                showToast('Token r\u00e9voqu\u00e9.');
-            }
+            } catch { showToast('Erreur r\u00e9seau.'); }
+        }
+
+        async function revokeToken(tokenId) {
+            if (!isLoggedIn()) return;
+            try {
+                const res = await fetch(`/api/Playground/revoke-token/${tokenId}`, { method: 'POST', headers: authHeaders() });
+                if (res.ok) { showToast('Token r\u00e9voqu\u00e9.'); renderDashboard(); }
+                else { const d = await res.json(); showToast(d.error || 'Erreur'); }
+            } catch { showToast('Erreur r\u00e9seau.'); }
         }
 
         function copyToken(key) {
@@ -800,33 +804,33 @@
         }
 
         function logout() {
-            const data = loadData();
-            data.currentAccountId = null;
-            saveData(data);
+            clearToken();
             closeModal();
+            const navActions = document.querySelector('.navbar-actions');
+            if (navActions) navActions.innerHTML = '<button class="btn btn-primary" onclick="VinApp.openModal()">Commencer</button>';
             showToast('D\u00e9connexion effectu\u00e9e.');
         }
 
-        // Close modal on overlay click
-        document.getElementById('accountModal')?.addEventListener('click', function(e) {
-            if (e.target === this) closeModal();
-        });
-
-        // Close modal on Escape
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') closeModal();
-        });
-
-        // Update navbar on load if logged in
-        (function initNav() {
-            const acct = currentAccount();
+        function updateNavbar(name) {
             const navActions = document.querySelector('.navbar-actions');
-            if (acct && navActions) {
-                navActions.innerHTML = `<button class="btn btn-secondary" onclick="VinApp.openModal()" style="padding:8px 18px;font-size:14px">${esc(acct.name.split(' ')[0])}</button>`;
+            if (navActions && name) {
+                const firstName = name.split(' ')[0];
+                navActions.innerHTML = `<button class="btn btn-secondary" onclick="VinApp.openModal()" style="padding:8px 18px;font-size:14px">${esc(firstName)}</button>`;
             }
-        })();
+        }
 
-        return { openModal, closeModal, switchTab, createAccount, generateToken, revokeToken, copyToken, logout };
+        document.getElementById('accountModal')?.addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
+
+        // Init navbar if logged in
+        if (isLoggedIn()) {
+            fetch('/api/Playground/me', { headers: authHeaders() }).then(async r => {
+                if (r.ok) { const d = await r.json(); updateNavbar(d.name); }
+                else { clearToken(); }
+            }).catch(() => {});
+        }
+
+        return { openModal, closeModal, switchTab, createAccount, generateToken, revokeToken, copyToken, logout, getToken, hmacSign };
     })();
 
     const VinDecode = (() => {
@@ -847,19 +851,6 @@
             'country', 'manufactured_in', 'manufacturer', 'number_of_doors', 'number_of_seats',
             'driveline', 'vehicule_type'
         ];
-
-        /* Challenge generator — split secret reassembled at runtime */
-        const _0x4a = [118,49,78,99,33,112,72,51,114,95];
-        const _0x4b = [112,76,52,121,71,114,48,117,78,100];
-        const _0x4c = [95,36,101,99,82,101,84,95,50,48,50,53,35,120,57,75,122];
-        function _xK(){return new Uint8Array([..._0x4a,..._0x4b,..._0x4c]);}
-        const _enc = new TextEncoder();
-        async function _cS(v,t){
-            const k = await crypto.subtle.importKey('raw',_xK(),{name:'HMAC',hash:'SHA-256'},false,['sign']);
-            const d = _enc.encode(v+'|'+t);
-            const b = await crypto.subtle.sign('HMAC',k,d);
-            return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
-        }
 
         function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
@@ -893,10 +884,13 @@
             const startTime = performance.now();
 
             try {
-                const t = Math.floor(Date.now() / 1000);
-                const s = await _cS(vin, t);
+                const {t, s} = await VinApp.hmacSign(vin);
                 const url = `/api/Playground/decode?vin=${encodeURIComponent(vin)}&t=${t}&s=${s}`;
-                const res = await fetch(url);
+                const headers = {};
+                const token = VinApp.getToken();
+                if (token) headers['X-Api-Key'] = token;
+
+                const res = await fetch(url, { headers });
                 const elapsed = Math.round(performance.now() - startTime);
 
                 const remaining = res.headers.get('X-RateLimit-Remaining');
@@ -960,7 +954,6 @@
             document.getElementById('resultVin').textContent = vin;
             document.getElementById('resultTimerValue').textContent = `${elapsed}ms`;
 
-            // Filter out meta keys for display
             const META_KEYS = ['_demo', '_remaining'];
             const displayKeys = Object.keys(data).filter(k => !META_KEYS.includes(k));
 
@@ -973,7 +966,6 @@
                 .map(k => `<div class="vehicle-spec"><div class="vehicle-spec-label">${esc(PRETTY_LABELS[k] || formatKey(k))}</div><div class="vehicle-spec-value">${esc(data[k])}</div></div>`)
                 .join('');
 
-            // Show upsell if truncated
             const upsellEl = document.getElementById('resultUpsell');
             if (data._demo) {
                 upsellEl.style.display = '';
@@ -992,12 +984,8 @@
         function sortKeys(keys) {
             const priority = [];
             const rest = [];
-            for (const k of PRIORITY_KEYS) {
-                if (keys.includes(k)) priority.push(k);
-            }
-            for (const k of keys) {
-                if (!PRIORITY_KEYS.includes(k)) rest.push(k);
-            }
+            for (const k of PRIORITY_KEYS) { if (keys.includes(k)) priority.push(k); }
+            for (const k of keys) { if (!PRIORITY_KEYS.includes(k)) rest.push(k); }
             return [...priority, ...rest.sort()];
         }
 
