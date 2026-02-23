@@ -41,7 +41,7 @@ namespace Domaine.Entities
         public string? OverallWidth { get; set; }
         public string? WheelbaseLength { get; set; }
         public int? StandardSeating { get; set; }
-        public int HermesMarketValue { get; set; } = 0;
+        public int Value { get; set; } = 0;
         public string Devise { get; set; } = "XOF";
 
         public CarDecode (CarBase carBase)
@@ -52,7 +52,7 @@ namespace Domaine.Entities
             MadeIn = carBase.MadeIn;
             Model = carBase.Model;
             Devise = carBase.Devise;
-            HermesMarketValue = carBase.HermesMarketValue;
+            Value = carBase.MarketValue;
             StandardSeating = carBase.StandardSeating;
             WheelbaseLength = carBase.WheelbaseLength;
             OverallHeight = carBase.OverallHeight;

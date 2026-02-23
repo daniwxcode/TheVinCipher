@@ -1,9 +1,6 @@
 ﻿using Domaine.Abstracts;
 
-using Microsoft.EntityFrameworkCore;
-
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domaine.Entities
 {
@@ -45,7 +42,7 @@ namespace Domaine.Entities
         public string? OverallWidth { get; set; }
         public string? WheelbaseLength { get; set; }
         public int? StandardSeating { get; set; }
-        public int HermesMarketValue { get; set; } = 0;
+        public int MarketValue { get; set; } = 0;
         public string Devise { get; set; } = "XOF";
         public string? ManufacturerSuggestedRetailPrice { get; set; }
         public DateTime? MadeDeate { get; set; }

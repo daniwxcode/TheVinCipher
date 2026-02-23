@@ -11,13 +11,13 @@ namespace Services.DataServices
 {
     public class DecodedCarBaseService : IHttpConsumtionServices
     {
-        private readonly HermesContext _dbContext;
+        private readonly VinCipherContext _dbContext;
         private readonly BaseApiProviderClient<CarBase> _api;
         private readonly BaseApiProvider _baseApiProvider;
         private readonly ICarService _carService;
-        public DecodedCarBaseService (HermesContext hermesContext, HttpClient httpClient, BaseApiProvider apiProvider, BaseApiProviderClient<CarBase> client, ICarService carService)
+        public DecodedCarBaseService (VinCipherContext context, HttpClient httpClient, BaseApiProvider apiProvider, BaseApiProviderClient<CarBase> client, ICarService carService)
         {
-            _dbContext = hermesContext;
+            _dbContext = context;
             _baseApiProvider = apiProvider;
             _carService = carService;
             _api = client;
@@ -36,11 +36,11 @@ namespace Services.DataServices
                     {
                         carbase.Year = vin.GetModelYear();
                         carbase.Vin = vin;
-                        carbase.HermesMarketValue = int.Parse(carbase?.ManufacturerSuggestedRetailPrice, NumberStyles.Currency, CultureInfo.CreateSpecificCulture("us-US").NumberFormat) * 600;
+                        carbase.MarketValue = int.Parse(carbase?.ManufacturerSuggestedRetailPrice, NumberStyles.Currency, CultureInfo.CreateSpecificCulture("us-US").NumberFormat) * 600;
                         int age = DateTime.Today.Year - carbase.Year.Value;
                         if (age > 4)
                         {
-                            carbase.HermesMarketValue = await GetActualValue(carbase.HermesMarketValue, age);
+                            carbase.MarketValue = await GetActualValue(carbase.MarketValue, age);
                         }
 
                         return carbase;
@@ -78,25 +78,25 @@ namespace Services.DataServices
             int age = DateTime.Now.Year - carBase?.Year ?? 20;
             if (carBase.ManufacturerSuggestedRetailPrice == null)
             {
-                int val = _dbContext.CarsBases.Where(c => c.Vin.Substring(0, 11) == carBase.Vin.Substring(0, 11)).Max(m => m.HermesMarketValue);
-                var val2 = _dbContext.CarsBases.Where(c => c.Vin.Substring(0, 11) == carBase.Vin.Substring(0, 11)).Average(m => m.HermesMarketValue);
+                int val = _dbContext.CarsBases.Where(c => c.Vin.Substring(0, 11) == carBase.Vin.Substring(0, 11)).Max(m => m.MarketValue);
+                var val2 = _dbContext.CarsBases.Where(c => c.Vin.Substring(0, 11) == carBase.Vin.Substring(0, 11)).Average(m => m.MarketValue);
                 if (val == 0)
                 {
-                    carBase.HermesMarketValue = (int)val2;
+                    carBase.MarketValue = (int)val2;
                 }
                 else
                 {
-                    carBase.HermesMarketValue = val;
+                    carBase.MarketValue = val;
                 }
 
             }
             else
             {
 
-                carBase.HermesMarketValue = int.Parse(carBase.ManufacturerSuggestedRetailPrice, NumberStyles.Currency, CultureInfo.CreateSpecificCulture("us-US").NumberFormat) * 600;
+                carBase.MarketValue = int.Parse(carBase.ManufacturerSuggestedRetailPrice, NumberStyles.Currency, CultureInfo.CreateSpecificCulture("us-US").NumberFormat) * 600;
 
             }
-            carBase.HermesMarketValue = await GetActualValue(carBase.HermesMarketValue, age);
+            carBase.MarketValue = await GetActualValue(carBase.MarketValue, age);
             try
             {
                 _dbContext.CarsBases.Update(carBase);
@@ -133,14 +133,14 @@ namespace Services.DataServices
                 FuelType = car.Energy,
                 Trim = car.Trim,
                 Style = car.Type,
-                HermesMarketValue = car.MarketValue.Value
+                MarketValue = car.MarketValue.Value
 
             };
             if (carBase.Year != 0)
             {
                 int age = DateTime.Now.Year - car.Year.Value;
                 int value = (int)(car.MarketValue * 1.1);
-                carBase.HermesMarketValue = await GetActualValue(value, age);
+                carBase.MarketValue = await GetActualValue(value, age);
             }
 
 
@@ -170,14 +170,14 @@ namespace Services.DataServices
                 FuelType = car.Energy,
                 Trim = car.Trim,
                 Style = car.Type,
-                HermesMarketValue = car.MarketValue.Value
+                MarketValue = car.MarketValue.Value
 
             };
             if (carBase.Year != 0)
             {
                 int age = DateTime.Now.Year - car.Year.Value;
                 int value = (int)(car.MarketValue * 1.1);
-                carBase.HermesMarketValue = await GetActualValue(value, age);
+                carBase.MarketValue = await GetActualValue(value, age);
             }
 
 
