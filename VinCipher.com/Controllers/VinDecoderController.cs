@@ -76,7 +76,7 @@ public partial class VinDecoderController : ControllerBase
 
         // Return cached result if available (24h TTL)
         ActionResult<Dictionary<string, string>> result;
-        if (_vinCache.TryGet(vin, out var cachedResult))
+        if (_vinCache.TryGet(vin[..11], out var cachedResult))
             result = Ok(cachedResult);
         else
             result = await ScrapeAndCacheAsync(vin, cancellationToken);
@@ -138,7 +138,7 @@ public partial class VinDecoderController : ControllerBase
 
                 if (result.Count > 17)
                 {
-                    _vinCache.Set(vin, result);
+                    _vinCache.Set(vin[..11], result);
                     return Ok(result);
                 }
                 return NotFound(result);
@@ -146,7 +146,7 @@ public partial class VinDecoderController : ControllerBase
         }
 
         result.Remove("Base Price");
-        _vinCache.Set(vin, result);
+        _vinCache.Set(vin[..11], result);
         return Ok(result);
     }
 

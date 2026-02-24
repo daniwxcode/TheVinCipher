@@ -17,13 +17,7 @@ using VinCipher.Model;
 
 var builder = WebApplication.CreateBuilder(args);
 ConfigurationManager configuration = builder.Configuration;
-// Add services to the container.
 
-//builder.Services.AddDbContext<VinCipherContext>(option =>
-//{
-//    option.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
-
-//});
 builder.Services.AddDbContext<PlaygroundDbContext>(options =>
     options.UseSqlite("Data Source=playground.db"));
 builder.Services.AddSingleton<BaseApiProvider, VincarioProvider>(_ => new VincarioProvider(configuration));

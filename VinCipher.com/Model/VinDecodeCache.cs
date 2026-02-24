@@ -15,7 +15,7 @@ public sealed class VinDecodeCache
 
     private static readonly MemoryCacheEntryOptions CacheOptions = new()
     {
-        AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(24),
+        AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(30),
         Size = 1
     };
 
