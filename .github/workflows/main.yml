@@ -4,12 +4,19 @@ on:
   push:
     branches: [ main ]
 
+env:
+  VPS_HOST: 62.171.155.200
+  APP_PATH: /var/www/vincipher
+  BACKUP_PATH: /var/www/vincipher-backup
+  SERVICE_NAME: vincipher
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -29,11 +36,37 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Copy files to VPS
+    - name: Deploy to VPS over SSH
       run: |
-        ssh -o StrictHostKeyChecking=no root@62.171.155.200 "rm -rf /tmp/vincipher-deploy && mkdir -p /tmp/vincipher-deploy"
-        scp -r publish/* root@62.171.155.200:/tmp/vincipher-deploy/
-        scp deploy/deploy.sh root@62.171.155.200:/tmp/vincipher-deploy/
+        set -e
 
-    - name: Run deploy script on VPS
-      run: ssh root@62.171.155.200 "chmod +x /tmp/vincipher-deploy/deploy.sh && sudo /tmp/vincipher-deploy/deploy.sh"
+        ssh -o StrictHostKeyChecking=no root@$VPS_HOST "
+          set -e
+          echo '=== VinCipher deployment (GitHub Actions) ==='
+          echo '[1/4] Stopping service...'
+          systemctl stop $SERVICE_NAME 2>/dev/null || true
+
+          echo '[2/4] Backing up current version...'
+          if [ -d '$APP_PATH' ]; then
+            rm -rf '$BACKUP_PATH'
+            cp -a '$APP_PATH' '$BACKUP_PATH'
+          fi
+
+          echo '[3/4] Preparing target directory...'
+          mkdir -p '$APP_PATH'
+          rm -rf '${APP_PATH:?}'/*
+        "
+
+        echo '[3/4] Copying new files...'
+        scp -r publish/* root@$VPS_HOST:$APP_PATH/
+
+        ssh -o StrictHostKeyChecking=no root@$VPS_HOST "
+          set -e
+          echo '[4/4] Setting permissions and restarting service...'
+          chown -R www-data:www-data '$APP_PATH' 2>/dev/null || true
+          chmod -R 755 '$APP_PATH'
+          systemctl daemon-reload
+          systemctl start $SERVICE_NAME
+          systemctl enable $SERVICE_NAME 2>/dev/null || true
+          systemctl status $SERVICE_NAME --no-pager -l || true
+        "
