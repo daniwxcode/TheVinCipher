@@ -1,0 +1,686 @@
+var Admin = (function () {
+    var _K = "vincipher_admin_session", _R = false;
+
+    function _gs() { return localStorage.getItem(_K); }
+    function _ss(k) { localStorage.setItem(_K, k); }
+    function _cs() { localStorage.removeItem(_K); }
+    function _hd() { return { "X-Admin-Key": _gs(), "Content-Type": "application/json" }; }
+
+    function _x(s) {
+        var d = document.createElement("div");
+        d.textContent = s;
+        return d.innerHTML;
+    }
+
+    function _fd(i) {
+        return new Date(i).toLocaleString("fr-FR", {
+            day: "numeric", month: "short", year: "numeric",
+            hour: "2-digit", minute: "2-digit"
+        });
+    }
+
+    function _ts(m) {
+        var el = document.getElementById("toast");
+        el.textContent = m;
+        el.classList.add("visible");
+        setTimeout(function () { el.classList.remove("visible"); }, 3000);
+    }
+
+    function _sm(h) {
+        document.getElementById("modalContent").innerHTML = h;
+        document.getElementById("modal").classList.add("active");
+    }
+
+    function _cm() {
+        document.getElementById("modal").classList.remove("active");
+    }
+
+    document.getElementById("modal")?.addEventListener("click", function (e) {
+        if (e.target.id === "modal") _cm();
+    });
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") _cm();
+    });
+
+    // ?? Authentication ??????????????????????????????????????????????
+
+    async function _li(e) {
+        e.preventDefault();
+        document.getElementById("loginError").textContent = "";
+        var u = document.getElementById("loginUser").value.trim(),
+            p = document.getElementById("loginPass").value;
+        try {
+            var r = await fetch("/api/Admin/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: u, password: p })
+            }),
+                d = await r.json();
+            if (!r.ok) {
+                document.getElementById("loginError").textContent = d.error || "Erreur";
+                return false;
+            }
+            _ss(d.sessionKey);
+            _R = d.isRoot;
+            _sa(d.username, d.isRoot);
+        } catch (ex) {
+            document.getElementById("loginError").textContent = "Erreur r\u00e9seau.";
+        }
+        return false;
+    }
+
+    async function _lo() {
+        _disconnectSse();
+        try { await fetch("/api/Admin/logout", { method: "POST", headers: _hd() }); } catch (ex) { }
+        _cs();
+        location.reload();
+    }
+
+    function _sa(u, r) {
+        document.getElementById("loginScreen").classList.add("hidden");
+        document.getElementById("mainApp").classList.remove("hidden");
+        var b = document.getElementById("adminBadge");
+        b.textContent = u + (r ? " (root)" : "");
+        b.classList.toggle("root", r);
+        document.getElementById("btnCreateAdmin").classList.toggle("hidden", !r);
+        _lst();
+        _lac();
+        _connectSse();
+    }
+
+    async function _in() {
+        if (!_gs()) return;
+        try {
+            var r = await fetch("/api/Admin/stats", { headers: _hd() });
+            if (r.ok) {
+                var ar = await fetch("/api/Admin/admins", { headers: _hd() });
+                if (ar.ok) {
+                    var d = await ar.json(),
+                        me = d.admins?.find(function (a) { return a.hasActiveSession; });
+                    _R = me?.isRoot ?? false;
+                    _sa(me?.username ?? "admin", _R);
+                }
+            } else {
+                _cs();
+            }
+        } catch (ex) {
+            _cs();
+        }
+    }
+
+    // ?? Stats ???????????????????????????????????????????????????????
+
+    async function _lst() {
+        var r = await fetch("/api/Admin/stats", { headers: _hd() });
+        if (!r.ok) return;
+        var s = await r.json();
+        var cardsHtml = [
+            ["totalAccounts", "Comptes"],
+            ["activeTokens", "Tokens actifs"],
+            ["totalRequests", "Requ\u00eates totales"],
+            ["todayRequests", "Aujourd\u2019hui"],
+            ["totalAdmins", "Admins"],
+            ["pendingRequests", "Demandes en attente"]
+        ].map(function (kl) {
+            var v = s[kl[0]] ?? 0;
+            return '<div class="stat-card' + (kl[0] === "pendingRequests" && v > 0 ? " highlight" : "") +
+                '"><div class="stat-value">' + v +
+                '</div><div class="stat-label">' + kl[1] + '</div></div>';
+        }).join("");
+
+        // Provider breakdown bars
+        if (s.providerBreakdown && s.providerBreakdown.length) {
+            var colors = { "VinRush": "#10b981", "NHTSA": "#3b82f6", "VinRush-US": "#f59e0b", "VinCyP": "#ec4899", "FreeVinDecoder": "#06b6d4", "Cache": "#6b7280", "Decoder": "#8b5cf6", "NotFound": "#ef4444", "Inconnu": "#9ca3af" };
+            cardsHtml += '<div class="stat-card" style="grid-column:1/-1"><div class="stat-label" style="margin-bottom:10px">R\u00e9partition par source</div>' +
+                s.providerBreakdown.map(function (p) {
+                    var c = colors[p.provider] || "#6b7280";
+                    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+                        '<span style="min-width:80px;font-size:12px;font-weight:600;color:' + c + '">' + _x(p.provider) + '</span>' +
+                        '<div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden">' +
+                        '<div style="width:' + p.percent + '%;height:100%;background:' + c + ';border-radius:4px"></div></div>' +
+                        '<span style="min-width:60px;font-size:12px;color:var(--dim);text-align:right">' + p.percent + '% (' + p.count + ')</span></div>';
+                }).join("") + '</div>';
+        }
+
+        document.getElementById("statsGrid").innerHTML = cardsHtml;
+    }
+
+    // ?? Tabs ????????????????????????????????????????????????????????
+
+    function _swt(t) {
+        document.querySelectorAll(".tab").forEach(function (e) {
+            e.classList.toggle("active", e.dataset.tab === t);
+        });
+        document.getElementById("tab-accounts").classList.toggle("hidden", t !== "accounts");
+        document.getElementById("tab-admins").classList.toggle("hidden", t !== "admins");
+        var trq = document.getElementById("tab-requests");
+        if (trq) trq.classList.toggle("hidden", t !== "requests");
+        var tf = document.getElementById("tab-failed");
+        if (tf) tf.classList.toggle("hidden", t !== "failed");
+        if (t === "accounts") _lac();
+        if (t === "admins") _lad();
+        if (t === "requests") _lar();
+        if (t === "failed") _lfv();
+    }
+
+    // ?? Accounts ????????????????????????????????????????????????????
+
+    async function _lac() {
+        document.getElementById("accountDetail").classList.add("hidden");
+        var r = await fetch("/api/Admin/accounts?size=50", { headers: _hd() });
+        if (!r.ok) return;
+        var d = await r.json(),
+            el = document.getElementById("accountsList");
+        if (!d.accounts.length) {
+            el.innerHTML = '<p style="color:var(--dim);text-align:center;padding:40px">Aucun compte.</p>';
+            return;
+        }
+        el.innerHTML =
+            '<div class="table-wrap"><table><thead><tr>' +
+            '<th>Nom</th><th>Email</th><th>Domaine</th><th>Tokens</th>' +
+            '<th>Requ\u00eates</th><th>Cr\u00e9\u00e9</th><th></th>' +
+            '</tr></thead><tbody>' +
+            d.accounts.map(function (a) {
+                return '<tr><td>' + _x(a.name) +
+                    '</td><td class="mono">' + _x(a.email) +
+                    '</td><td>' + _x(a.domain) +
+                    '</td><td>' + a.activeTokens + '/' + a.totalTokens +
+                    '</td><td>' + a.totalRequests +
+                    '</td><td>' + _fd(a.createdAt) +
+                    '</td><td>' +
+                    '<button class="btn btn-ghost btn-sm" onclick="Admin.viewAccount(\'' + a.id + '\')">D\u00e9tails</button> ' +
+                    '<button class="btn btn-danger btn-sm" onclick="Admin.deleteAccount(\'' + a.id + "','" + _x(a.email) + '\')">Suppr.</button>' +
+                    '</td></tr>';
+            }).join("") +
+            '</tbody></table></div>';
+    }
+
+    // ?? Account detail ??????????????????????????????????????????????
+
+    async function _vac(id) {
+        var r = await fetch("/api/Admin/accounts/" + id, { headers: _hd() });
+        if (!r.ok) { _ts("Erreur chargement"); return; }
+
+        var d = await r.json(),
+            a = d.account,
+            vs = d.vinStats || {},
+            el = document.getElementById("accountDetail");
+
+        el.classList.remove("hidden");
+
+        var html =
+            '<div class="detail-panel">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+            '<h3 style="font-size:18px">' + _x(a.name) + '</h3>' +
+            '<button class="btn btn-ghost btn-sm" onclick="document.getElementById(\'accountDetail\').classList.add(\'hidden\')">&times; Fermer</button>' +
+            '</div>' +
+            '<div class="detail-row"><span>Email</span><span>' + _x(a.email) + '</span></div>' +
+            '<div class="detail-row"><span>T\u00e9l\u00e9phone</span><span>' + _x(a.phone) + '</span></div>' +
+            '<div class="detail-row"><span>Domaine</span><span>' + _x(a.domain) + '</span></div>' +
+            '<div class="detail-row"><span>Cr\u00e9\u00e9</span><span>' + _fd(a.createdAtUtc) + '</span></div>';
+
+        // VIN stats
+        html +=
+            '<div class="section-title">Statistiques VIN</div>' +
+            '<div class="mini-stats-grid">' +
+            '<div class="mini-stat"><div class="mini-stat-value">' + (vs.totalRequests ?? 0) + '</div><div class="mini-stat-label">Total requ\u00eates</div></div>' +
+            '<div class="mini-stat"><div class="mini-stat-value">' + (vs.todayRequests ?? 0) + '</div><div class="mini-stat-label">Aujourd\u2019hui</div></div>' +
+            '<div class="mini-stat"><div class="mini-stat-value">' + (vs.successRate ?? 0) + '%</div><div class="mini-stat-label">Taux succ\u00e8s</div></div>' +
+            '<div class="mini-stat"><div class="mini-stat-value">' + (vs.avgResponseTimeMs ?? 0) + 'ms</div><div class="mini-stat-label">Temps moyen</div></div>' +
+            '<div class="mini-stat"><div class="mini-stat-value">' + (vs.uniqueVins ?? 0) + '</div><div class="mini-stat-label">VINs uniques</div></div>' +
+            '<div class="mini-stat"><div class="mini-stat-value">' + (vs.failureCount ?? 0) + '</div><div class="mini-stat-label">\u00c9checs</div></div>' +
+            '</div>';
+
+        // Provider breakdown for this account
+        if (vs.providerBreakdown && vs.providerBreakdown.length) {
+            var colors = { "VinRush": "#10b981", "NHTSA": "#3b82f6", "VinRush-US": "#f59e0b", "VinCyP": "#ec4899", "FreeVinDecoder": "#06b6d4", "Cache": "#6b7280", "Decoder": "#8b5cf6", "NotFound": "#ef4444", "Inconnu": "#9ca3af" };
+            html += '<div class="section-title">Sources de d\u00e9codage</div><div style="padding:0 4px">' +
+                vs.providerBreakdown.map(function (p) {
+                    var c = colors[p.provider] || "#6b7280";
+                    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+                        '<span style="min-width:80px;font-size:12px;font-weight:600;color:' + c + '">' + _x(p.provider) + '</span>' +
+                        '<div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden">' +
+                        '<div style="width:' + p.percent + '%;height:100%;background:' + c + ';border-radius:4px"></div></div>' +
+                        '<span style="min-width:60px;font-size:12px;color:var(--dim);text-align:right">' + p.percent + '% (' + p.count + ')</span></div>';
+                }).join("") + '</div>';
+        }
+
+        // Top VINs
+        if (vs.topVins && vs.topVins.length) {
+            html +=
+                '<div class="section-title">Top VINs requ\u00eat\u00e9s</div>' +
+                '<div class="table-wrap"><table><thead><tr><th>VIN</th><th>Requ\u00eates</th><th>Derni\u00e8re</th></tr></thead><tbody>' +
+                vs.topVins.map(function (v) {
+                    return '<tr><td class="mono">' + _x(v.vin) + '</td><td>' + v.count + '</td><td>' + _fd(v.lastQueried) + '</td></tr>';
+                }).join("") +
+                '</tbody></table></div>';
+        }
+
+        // Tokens
+        html +=
+            '<div class="section-title">Tokens ' +
+            '<button class="btn btn-primary btn-sm" onclick="Admin.showCreateToken(\'' + a.id + '\')">+ Cr\u00e9er</button></div>' +
+            '<div class="table-wrap"><table><thead><tr>' +
+            '<th>Cl\u00e9</th><th>Nom</th><th>Statut</th><th>Limite/j</th><th>Expire</th><th></th>' +
+            '</tr></thead><tbody>' +
+            d.tokens.map(function (t) {
+                var ex = new Date(t.expiresAtUtc) < new Date(),
+                    st = !t.isActive ? "revoked" : ex ? "expired" : "active",
+                    sl = st === "active" ? "Actif" : st === "expired" ? "Expir\u00e9" : "R\u00e9voqu\u00e9";
+
+                var revokeBtn = t.isActive
+                    ? '<button class="btn btn-danger btn-sm" onclick="Admin.revokeToken(\'' + a.id + "','" + t.id + '\')">R\u00e9voquer</button>'
+                    : "";
+                var extendBtn = '<button class="btn btn-green btn-sm" onclick="Admin.showExtendToken(\'' + a.id + "','" + t.id + '\')">Prolonger</button>';
+                var limitBtn = '<button class="btn btn-ghost btn-sm" onclick="Admin.showSetLimit(\'' + a.id + "','" + t.id + "'," + t.dailyLimit + ')">\u2699 Limite</button>';
+
+                return '<tr>' +
+                    '<td class="mono" style="max-width:200px;overflow:hidden;text-overflow:ellipsis">' + _x(t.key) + '</td>' +
+                    '<td>' + _x(t.name) + '</td>' +
+                    '<td><span class="status-' + st + '">' + sl + '</span></td>' +
+                    '<td>' + (t.dailyLimit > 0 ? t.dailyLimit : "\u221e") + '</td>' +
+                    '<td>' + _fd(t.expiresAtUtc) + '</td>' +
+                    '<td style="white-space:nowrap">' + revokeBtn + extendBtn + ' ' + limitBtn + '</td>' +
+                    '</tr>';
+            }).join("") +
+            '</tbody></table></div>';
+
+        // Recent logs
+        html += '<div class="section-title">Derni\u00e8res requ\u00eates</div>';
+        if (d.recentLogs.length) {
+            html +=
+                '<div class="table-wrap"><table><thead><tr><th>VIN</th><th>Source</th><th>Statut</th><th>Temps</th><th>Date</th></tr></thead><tbody>' +
+                d.recentLogs.map(function (l) {
+                    var prov = _x(l.provider || "\u2014");
+                    var provColor = l.provider === "Cache" ? "var(--dim)" : "var(--green)";
+                    return '<tr><td class="mono">' + _x(l.vin) +
+                        '</td><td><span style="color:' + provColor + ';font-size:12px;font-weight:600">' + prov + '</span></td>' +
+                        '<td><span style="color:' + (l.success ? "var(--green)" : "var(--red)") + '">' + l.statusCode + '</span></td>' +
+                        '<td>' + l.responseTimeMs + 'ms</td>' +
+                        '<td>' + _fd(l.timestamp) + '</td></tr>';
+                }).join("") +
+                '</tbody></table></div>';
+        } else {
+            html += '<p style="color:var(--dim);font-size:13px">Aucune requ\u00eate.</p>';
+        }
+
+        html += '</div>';
+        el.innerHTML = html;
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    async function _dac(id, em) {
+        if (!confirm("Supprimer le compte " + em + " et toutes ses donn\u00e9es ?")) return;
+        var r = await fetch("/api/Admin/accounts/" + id, { method: "DELETE", headers: _hd() });
+        if (r.ok) { _ts("Compte supprim\u00e9."); _lac(); _lst(); }
+        else { var d = await r.json(); _ts(d.error || "Erreur"); }
+    }
+
+    // ?? Token management ????????????????????????????????????????????
+
+    function _sct(ai) {
+        _sm(
+            '<h3>Cr\u00e9er un token</h3>' +
+            '<div class="form-group"><label class="form-label">Nom</label>' +
+            '<input class="form-input" id="ctName" value="Admin-created"></div>' +
+            '<div class="form-group"><label class="form-label">Dur\u00e9e (jours)</label>' +
+            '<input class="form-input" type="number" id="ctDays" value="1" min="1" max="365"></div>' +
+            '<div style="display:flex;gap:8px;margin-top:16px">' +
+            '<button class="btn btn-primary" onclick="Admin.createToken(\'' + ai + '\')">Cr\u00e9er</button>' +
+            '<button class="btn btn-ghost" onclick="Admin.closeModal()">Annuler</button></div>'
+        );
+    }
+
+    async function _ct(ai) {
+        var n = document.getElementById("ctName").value.trim(),
+            dy = parseInt(document.getElementById("ctDays").value) || 1,
+            r = await fetch("/api/Admin/accounts/" + ai + "/tokens", {
+                method: "POST", headers: _hd(),
+                body: JSON.stringify({ name: n, durationDays: dy })
+            });
+        if (r.ok) { _cm(); _ts("Token cr\u00e9\u00e9."); _vac(ai); }
+        else { var d = await r.json(); _ts(d.error || "Erreur"); }
+    }
+
+    async function _rvt(ai, ti) {
+        if (!confirm("R\u00e9voquer ce token ?")) return;
+        var r = await fetch("/api/Admin/accounts/" + ai + "/tokens/" + ti + "/revoke", { method: "POST", headers: _hd() });
+        if (r.ok) { _ts("Token r\u00e9voqu\u00e9."); _vac(ai); }
+        else { var d = await r.json(); _ts(d.error || "Erreur"); }
+    }
+
+    function _set(ai, ti) {
+        _sm(
+            '<h3>Prolonger le token</h3>' +
+            '<div class="form-group"><label class="form-label">Jours suppl\u00e9mentaires</label>' +
+            '<input class="form-input" type="number" id="extDays" value="7" min="1" max="365"></div>' +
+            '<div style="display:flex;gap:8px;margin-top:16px">' +
+            '<button class="btn btn-primary" onclick="Admin.extendToken(\'' + ai + "','" + ti + '\')">Prolonger</button>' +
+            '<button class="btn btn-ghost" onclick="Admin.closeModal()">Annuler</button></div>'
+        );
+    }
+
+    async function _ext(ai, ti) {
+        var dy = parseInt(document.getElementById("extDays").value) || 7,
+            r = await fetch("/api/Admin/accounts/" + ai + "/tokens/" + ti + "/extend", {
+                method: "POST", headers: _hd(),
+                body: JSON.stringify({ additionalDays: dy })
+            });
+        if (r.ok) { _cm(); _ts("Token prolong\u00e9."); _vac(ai); }
+        else { var d = await r.json(); _ts(d.error || "Erreur"); }
+    }
+
+    // ?? Admin users ?????????????????????????????????????????????????
+
+    async function _lad() {
+        var r = await fetch("/api/Admin/admins", { headers: _hd() });
+        if (!r.ok) return;
+        var d = await r.json();
+        document.getElementById("adminsList").innerHTML =
+            '<div class="table-wrap"><table><thead><tr>' +
+            '<th>Username</th><th>R\u00f4le</th><th>Cr\u00e9\u00e9</th><th>Session</th><th></th>' +
+            '</tr></thead><tbody>' +
+            d.admins.map(function (a) {
+                return '<tr><td><strong>' + _x(a.username) + '</strong></td>' +
+                    '<td>' + (a.isRoot ? '<span class="badge root">root</span>' : '<span class="badge">admin</span>') + '</td>' +
+                    '<td>' + _fd(a.createdAtUtc) + '</td>' +
+                    '<td><span style="color:' + (a.hasActiveSession ? "var(--green)" : "var(--dim)") + '">' +
+                    (a.hasActiveSession ? "Active" : "Inactive") + '</span></td>' +
+                    '<td>' + (!a.isRoot && _R
+                        ? '<button class="btn btn-danger btn-sm" onclick="Admin.deleteAdmin(\'' + a.id + "','" + _x(a.username) + '\')">Suppr.</button>'
+                        : "") +
+                    '</td></tr>';
+            }).join("") +
+            '</tbody></table></div>';
+    }
+
+    function _sca() {
+        _sm(
+            '<h3>Nouvel administrateur</h3>' +
+            '<div class="form-group"><label class="form-label">Username</label>' +
+            '<input class="form-input" id="newAdminUser" required></div>' +
+            '<div class="form-group"><label class="form-label">Mot de passe (min 8 car.)</label>' +
+            '<input class="form-input" type="password" id="newAdminPass" required></div>' +
+            '<div class="error-msg" id="createAdminErr"></div>' +
+            '<div style="display:flex;gap:8px;margin-top:16px">' +
+            '<button class="btn btn-primary" onclick="Admin.createAdmin()">Cr\u00e9er</button>' +
+            '<button class="btn btn-ghost" onclick="Admin.closeModal()">Annuler</button></div>'
+        );
+    }
+
+    async function _cra() {
+        var u = document.getElementById("newAdminUser").value.trim(),
+            pw = document.getElementById("newAdminPass").value,
+            er = document.getElementById("createAdminErr");
+        er.textContent = "";
+        if (!u || pw.length < 8) { er.textContent = "Username requis, mot de passe min 8 car."; return; }
+        var r = await fetch("/api/Admin/admins", {
+            method: "POST", headers: _hd(),
+            body: JSON.stringify({ username: u, password: pw })
+        }),
+            d = await r.json();
+        if (r.ok) { _cm(); _ts("Admin " + u + " cr\u00e9\u00e9."); _lad(); }
+        else { er.textContent = d.error || "Erreur"; }
+    }
+
+    async function _dad(id, u) {
+        if (!confirm("Supprimer l'admin " + u + " ?")) return;
+        var r = await fetch("/api/Admin/admins/" + id, { method: "DELETE", headers: _hd() });
+        if (r.ok) { _ts("Admin " + u + " supprim\u00e9."); _lad(); _lst(); }
+        else { var d = await r.json(); _ts(d.error || "Erreur"); }
+    }
+
+    // ?? Access requests ?????????????????????????????????????????????
+
+    var _dm = {
+        concessionnaire: "Concessionnaire automobile",
+        assurance: "Assurance",
+        ecommerce: "E-commerce automobile",
+        location: "Location de v\u00e9hicules",
+        logistique: "Logistique & transport",
+        fintech: "Fintech / Cr\u00e9dit auto",
+        inspection: "Inspection & contr\u00f4le technique",
+        marketplace: "Marketplace C2C / B2C",
+        saas: "SaaS / Int\u00e9grateur",
+        autre: "Autre"
+    };
+
+    async function _lar(st) {
+        var u = "/api/Admin/access-requests?size=50";
+        if (st) u += "&status=" + st;
+        var r = await fetch(u, { headers: _hd() });
+        if (!r.ok) return;
+        var d = await r.json(),
+            el = document.getElementById("requestsList");
+        if (!d.requests.length) {
+            el.innerHTML = '<p style="color:var(--dim);text-align:center;padding:40px">Aucune demande.</p>';
+            return;
+        }
+        el.innerHTML =
+            '<div class="table-wrap"><table><thead><tr>' +
+            '<th>Nom</th><th>Email</th><th>Domaine</th><th>Raison</th><th>Statut</th><th>Date</th><th></th>' +
+            '</tr></thead><tbody>' +
+            d.requests.map(function (rq) {
+                var sc = rq.status === "pending" ? "orange" : rq.status === "approved" ? "var(--green)" : "var(--red)";
+                return '<tr style="cursor:pointer" onclick="Admin.viewRequest(\'' + rq.id + '\')">' +
+                    '<td>' + _x(rq.name) + '</td>' +
+                    '<td class="mono">' + _x(rq.email) + '</td>' +
+                    '<td>' + _x(_dm[rq.domain] || rq.domain) + '</td>' +
+                    '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + _x(rq.reason) + '">' + _x(rq.reason) + '</td>' +
+                    '<td><span style="color:' + sc + '">' + _x(rq.status) + '</span></td>' +
+                    '<td>' + _fd(rq.createdAtUtc) + '</td>' +
+                    '<td onclick="event.stopPropagation()">' +
+                    (rq.status === "pending"
+                        ? '<button class="btn btn-green btn-sm" onclick="Admin.approveRequest(\'' + rq.id + '\')">\u2713</button> ' +
+                          '<button class="btn btn-danger btn-sm" onclick="Admin.rejectRequest(\'' + rq.id + '\')">\u2717</button>'
+                        : rq.reviewedBy ? "Par " + _x(rq.reviewedBy) : "") +
+                    '</td></tr>';
+            }).join("") +
+            '</tbody></table></div>';
+    }
+
+    async function _vrq(id) {
+        var r = await fetch("/api/Admin/access-requests/" + id, { headers: _hd() });
+        if (!r.ok) { _ts("Erreur chargement"); return; }
+        var rq = await r.json(),
+            sl = rq.status === "pending" ? "orange" : rq.status === "approved" ? "var(--green)" : "var(--red)";
+
+        var html =
+            '<div style="max-width:500px">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+            '<h3 style="font-size:18px">Demande de ' + _x(rq.name) + '</h3>' +
+            '<span style="color:' + sl + ';font-weight:700;font-size:13px;text-transform:uppercase">' + _x(rq.status) + '</span></div>' +
+            '<div class="detail-row"><span>Email</span><span>' + _x(rq.email) + '</span></div>' +
+            '<div class="detail-row"><span>T\u00e9l\u00e9phone</span><span>' + _x(rq.phone || "\u2014") + '</span></div>' +
+            '<div class="detail-row"><span>Domaine</span><span>' + _x(_dm[rq.domain] || rq.domain || "\u2014") + '</span></div>' +
+            '<div class="detail-row"><span>Soumise le</span><span>' + _fd(rq.createdAtUtc) + '</span></div>' +
+            (rq.reviewedAtUtc ? '<div class="detail-row"><span>Examin\u00e9e le</span><span>' + _fd(rq.reviewedAtUtc) + '</span></div>' : "") +
+            (rq.reviewedBy ? '<div class="detail-row"><span>Par</span><span>' + _x(rq.reviewedBy) + '</span></div>' : "") +
+            (rq.accountId
+                ? '<div class="detail-row"><span>Compte</span><span>' +
+                  '<button class="btn btn-ghost btn-sm" onclick="Admin.closeModal();Admin.switchTab(\'accounts\');setTimeout(function(){Admin.viewAccount(\'' + rq.accountId + '\')},300)">Voir le compte</button>' +
+                  '</span></div>'
+                : "") +
+            '<div style="margin-top:16px">' +
+            '<div style="font-size:13px;font-weight:600;color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em">Motivation</div>' +
+            '<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:14px;line-height:1.7;white-space:pre-wrap;max-height:300px;overflow-y:auto">' + _x(rq.reason) + '</div></div>' +
+            '<div style="display:flex;gap:8px;margin-top:20px;justify-content:flex-end">' +
+            (rq.status === "pending"
+                ? '<button class="btn btn-green btn-sm" onclick="Admin.closeModal();Admin.approveRequest(\'' + rq.id + '\')">\u2713 Approuver</button>' +
+                  '<button class="btn btn-danger btn-sm" onclick="Admin.closeModal();Admin.rejectRequest(\'' + rq.id + '\')">\u2717 Refuser</button>'
+                : "") +
+            '<button class="btn btn-ghost btn-sm" onclick="Admin.closeModal()">Fermer</button></div></div>';
+
+        _sm(html);
+    }
+
+    async function _apr(id) {
+        _sm(
+            '<h3>Approuver la demande</h3>' +
+            '<div class="form-group"><label class="form-label">Dur\u00e9e du token (jours)</label>' +
+            '<input class="form-input" type="number" id="appDays" value="30" min="1" max="365"></div>' +
+            '<div style="display:flex;gap:8px;margin-top:16px">' +
+            '<button class="btn btn-primary" onclick="Admin.confirmApprove(\'' + id + '\')">\u2713 Approuver</button>' +
+            '<button class="btn btn-ghost" onclick="Admin.closeModal()">Annuler</button></div>'
+        );
+    }
+
+    async function _capr(id) {
+        var dy = parseInt(document.getElementById("appDays").value) || 30,
+            r = await fetch("/api/Admin/access-requests/" + id + "/approve", {
+                method: "POST", headers: _hd(),
+                body: JSON.stringify({ durationDays: dy })
+            });
+        if (r.ok) {
+            _cm();
+            var d = await r.json();
+            _ts(d.message || "Demande approuv\u00e9e.");
+            _lar(); _lst(); _lac();
+        } else {
+            var d2 = await r.json();
+            _ts(d2.error || "Erreur");
+        }
+    }
+
+    async function _rjr(id) {
+        if (!confirm("Refuser cette demande ?")) return;
+        var r = await fetch("/api/Admin/access-requests/" + id + "/reject", { method: "POST", headers: _hd() });
+        if (r.ok) { _ts("Demande refus\u00e9e."); _lar(); _lst(); }
+        else { var d = await r.json(); _ts(d.error || "Erreur"); }
+    }
+
+    // ?? Daily limit ?????????????????????????????????????????????????
+
+    function _ssl(ai, ti, cur) {
+        _sm(
+            '<h3>Limite journali\u00e8re</h3>' +
+            '<p style="font-size:13px;color:var(--dim);margin-bottom:12px">0 = illimit\u00e9</p>' +
+            '<div class="form-group"><label class="form-label">Requ\u00eates / jour</label>' +
+            '<input class="form-input" type="number" id="limVal" value="' + cur + '" min="0" max="10000"></div>' +
+            '<div style="display:flex;gap:8px;margin-top:16px">' +
+            '<button class="btn btn-primary" onclick="Admin.setLimit(\'' + ai + "','" + ti + '\')">Appliquer</button>' +
+            '<button class="btn btn-ghost" onclick="Admin.closeModal()">Annuler</button></div>'
+        );
+    }
+
+    async function _sli(ai, ti) {
+        var v = parseInt(document.getElementById("limVal").value) || 0;
+        var r = await fetch("/api/Admin/accounts/" + ai + "/tokens/" + ti + "/daily-limit", {
+            method: "POST", headers: _hd(),
+            body: JSON.stringify({ dailyLimit: v })
+        });
+        if (r.ok) { _cm(); _ts("Limite mise \u00e0 jour."); _vac(ai); }
+        else { var d = await r.json(); _ts(d.error || "Erreur"); }
+    }
+
+    // ?? Failed VINs ??????????????????????????????????????????????????
+
+    async function _lfv() {
+        var r = await fetch("/api/Admin/failed-vins?size=50", { headers: _hd() });
+        if (!r.ok) return;
+        var d = await r.json(),
+            el = document.getElementById("failedVinsList");
+
+        if (!d.vins.length) {
+            el.innerHTML = '<p style="color:var(--dim);text-align:center;padding:40px">Aucun VIN en \u00e9chec.</p>';
+            return;
+        }
+
+        var summaryHtml =
+            '<div class="mini-stats-grid" style="margin-bottom:16px">' +
+            '<div class="mini-stat"><div class="mini-stat-value">' + d.total + '</div><div class="mini-stat-label">VINs en \u00e9chec</div></div>' +
+            '<div class="mini-stat"><div class="mini-stat-value" style="color:var(--red)">' + d.neverSucceeded + '</div><div class="mini-stat-label">Jamais r\u00e9solus</div></div>' +
+            '</div>';
+
+        var tableHtml =
+            '<div class="table-wrap"><table><thead><tr>' +
+            '<th>VIN</th><th>\u00c9checs</th><th>Sources test\u00e9es</th><th>Codes</th><th>R\u00e9solu ?</th><th>Dernier essai</th>' +
+            '</tr></thead><tbody>' +
+            d.vins.map(function (v) {
+                var providers = v.providersTried.length ? v.providersTried.map(function (p) { return _x(p); }).join(", ") : "\u2014";
+                var codes = v.statusCodes.join(", ");
+                var resolved = v.hasSucceeded
+                    ? '<span style="color:var(--green)">\u2713 Oui</span>'
+                    : '<span style="color:var(--red);font-weight:700">\u2717 Non</span>';
+                return '<tr>' +
+                    '<td class="mono">' + _x(v.vin) + '</td>' +
+                    '<td style="font-weight:700;color:var(--red)">' + v.failureCount + '</td>' +
+                    '<td style="font-size:12px">' + providers + '</td>' +
+                    '<td class="mono" style="font-size:12px">' + codes + '</td>' +
+                    '<td>' + resolved + '</td>' +
+                    '<td>' + _fd(v.lastAttempt) + '</td></tr>';
+            }).join("") +
+            '</tbody></table></div>';
+
+        el.innerHTML = summaryHtml + tableHtml;
+    }
+
+    // ?? Real-time SSE ???????????????????????????????????????????????
+
+    var _sse = null;
+    var _sseDebounce = null;
+
+    function _connectSse() {
+        if (_sse) { _sse.close(); _sse = null; }
+        var key = _gs();
+        if (!key) return;
+
+        _sse = new EventSource("/api/Admin/events?key=" + encodeURIComponent(key));
+
+        _sse.onmessage = function (e) {
+            // Debounce: batch rapid events into one refresh
+            if (_sseDebounce) clearTimeout(_sseDebounce);
+            _sseDebounce = setTimeout(function () {
+                _lst();
+                // Refresh active tab content
+                var active = document.querySelector(".tab.active");
+                if (active) {
+                    var tab = active.dataset.tab;
+                    if (tab === "accounts") _lac();
+                    if (tab === "failed") _lfv();
+                }
+            }, 1500);
+        };
+
+        _sse.onerror = function () {
+            // Auto-reconnect after 10s on error
+            if (_sse) { _sse.close(); _sse = null; }
+            setTimeout(_connectSse, 10000);
+        };
+    }
+
+    function _disconnectSse() {
+        if (_sse) { _sse.close(); _sse = null; }
+    }
+
+    // ?? Init & public API ???????????????????????????????????????????
+
+    _in();
+
+    return {
+        login: _li,
+        logout: _lo,
+        switchTab: _swt,
+        loadAccounts: _lac,
+        viewAccount: _vac,
+        deleteAccount: _dac,
+        showCreateToken: _sct,
+        createToken: _ct,
+        revokeToken: _rvt,
+        showExtendToken: _set,
+        extendToken: _ext,
+        loadAdmins: _lad,
+        showCreateAdmin: _sca,
+        createAdmin: _cra,
+        deleteAdmin: _dad,
+        closeModal: _cm,
+        loadRequests: _lar,
+        viewRequest: _vrq,
+        approveRequest: _apr,
+        confirmApprove: _capr,
+        rejectRequest: _rjr,
+        showSetLimit: _ssl,
+        setLimit: _sli,
+        loadFailedVins: _lfv
+    };
+})();

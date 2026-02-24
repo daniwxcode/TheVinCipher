@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 using VinCipher.Model;
 using VinCipher.Model.Playground;
+using VinCipher.Services;
 
 namespace VinCipher.Controllers;
 
@@ -22,17 +23,20 @@ public class AdminController : ControllerBase
     private readonly TokensProvider _tokensProvider;
     private readonly IConfiguration _config;
     private readonly ILogger<AdminController> _logger;
+    private readonly AdminEventBus _eventBus;
 
     public AdminController(
         PlaygroundDbContext db,
         TokensProvider tokensProvider,
         IConfiguration config,
-        ILogger<AdminController> logger)
+        ILogger<AdminController> logger,
+        AdminEventBus eventBus)
     {
         _db = db;
         _tokensProvider = tokensProvider;
         _config = config;
         _logger = logger;
+        _eventBus = eventBus;
     }
 
     // ??? Authentication ????????????????????????????????????????????
@@ -148,6 +152,7 @@ public class AdminController : ControllerBase
                 statusCode = r.StatusCode,
                 success = r.Success,
                 responseTimeMs = r.ResponseTimeMs,
+                provider = r.Provider,
                 timestamp = r.TimestampUtc,
                 tokenId = r.TokenId
             })
@@ -169,6 +174,14 @@ public class AdminController : ControllerBase
             .OrderByDescending(g => g.count)
             .Take(10)
             .ToListAsync();
+
+        var providerBreakdown = totalRequests > 0
+            ? await logsQuery
+                .GroupBy(r => r.Provider == "" ? "Inconnu" : r.Provider)
+                .Select(g => new { provider = g.Key, count = g.Count() })
+                .OrderByDescending(g => g.count)
+                .ToListAsync()
+            : [];
 
         return Ok(new
         {
@@ -203,7 +216,13 @@ public class AdminController : ControllerBase
                 successRate = totalRequests > 0 ? Math.Round(100.0 * successCount / totalRequests, 1) : 0,
                 avgResponseTimeMs = Math.Round(avgResponseTime),
                 uniqueVins,
-                topVins
+                topVins,
+                providerBreakdown = providerBreakdown.Select(p => new
+                {
+                    p.provider,
+                    p.count,
+                    percent = Math.Round(100.0 * p.count / totalRequests, 1)
+                })
             },
             recentLogs
         });
@@ -445,16 +464,31 @@ public class AdminController : ControllerBase
         if (admin is null) return err!;
 
         var today = DateTime.UtcNow.Date;
+        var totalRequests = await _db.RequestLogs.CountAsync();
+
+        var providerBreakdown = totalRequests > 0
+            ? await _db.RequestLogs
+                .GroupBy(r => r.Provider == "" ? "Inconnu" : r.Provider)
+                .Select(g => new { provider = g.Key, count = g.Count() })
+                .OrderByDescending(g => g.count)
+                .ToListAsync()
+            : [];
 
         return Ok(new
         {
             totalAccounts = await _db.Accounts.CountAsync(),
             totalTokens = await _db.ApiTokens.CountAsync(),
             activeTokens = await _db.ApiTokens.CountAsync(t => t.IsActive && t.ExpiresAtUtc > DateTime.UtcNow),
-            totalRequests = await _db.RequestLogs.CountAsync(),
+            totalRequests,
             todayRequests = await _db.RequestLogs.CountAsync(r => r.TimestampUtc >= today),
             totalAdmins = await _db.AdminUsers.CountAsync(),
-            pendingRequests = await _db.AccessRequests.CountAsync(r => r.Status == "pending")
+            pendingRequests = await _db.AccessRequests.CountAsync(r => r.Status == "pending"),
+            providerBreakdown = providerBreakdown.Select(p => new
+            {
+                p.provider,
+                p.count,
+                percent = Math.Round(100.0 * p.count / totalRequests, 1)
+            })
         });
     }
 
@@ -617,6 +651,115 @@ public class AdminController : ControllerBase
             admin.Username, requestId, request.Email);
 
         return Ok(new { message = $"Demande de {request.Email} refus\u00e9e." });
+    }
+
+    // ??? Real-time SSE stream ??????????????????????????????????????
+
+    /// <summary>
+    /// Server-Sent Events stream for real-time admin dashboard updates.
+    /// Accepts session key via query param since EventSource cannot send headers.
+    /// </summary>
+    [HttpGet("events")]
+    public async Task Events([FromQuery] string key, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            Response.StatusCode = 401;
+            return;
+        }
+
+        var hashedKey = AdminUser.HashSessionKey(key);
+        var admin = await _db.AdminUsers.FirstOrDefaultAsync(a => a.SessionKey == hashedKey);
+        if (admin is null || admin.SessionExpiresAtUtc is null || admin.SessionExpiresAtUtc < DateTime.UtcNow)
+        {
+            Response.StatusCode = 401;
+            return;
+        }
+
+        Response.Headers.ContentType = "text/event-stream";
+        Response.Headers.CacheControl = "no-cache";
+        Response.Headers.Connection = "keep-alive";
+
+        var reader = _eventBus.Subscribe();
+        try
+        {
+            await foreach (var evt in reader.ReadAllAsync(cancellationToken))
+            {
+                await Response.WriteAsync(evt.ToSseData(), cancellationToken);
+                await Response.Body.FlushAsync(cancellationToken);
+            }
+        }
+        catch (OperationCanceledException) { }
+        finally
+        {
+            _eventBus.Unsubscribe(reader);
+        }
+    }
+
+    // ??? Failed VINs analytics ???????????????????????????????????????
+
+    /// <summary>
+    /// Returns VINs that consistently fail decoding, grouped by VIN,
+    /// with providers attempted and failure count.
+    /// </summary>
+    [HttpGet("failed-vins")]
+    public async Task<ActionResult> FailedVins(
+        [FromQuery] int page = 1,
+        [FromQuery] int size = 30,
+        [FromQuery] int minFailures = 1)
+    {
+        var (admin, errResult) = await AuthenticateAdminAsync();
+        if (admin is null) return errResult!;
+
+        size = Math.Clamp(size, 1, 100);
+        page = Math.Max(page, 1);
+        minFailures = Math.Max(1, minFailures);
+
+        // Simple projection SQLite can handle — group in memory
+        var failedLogs = await _db.RequestLogs
+            .Where(r => !r.Success)
+            .Select(r => new { r.Vin, r.StatusCode, r.Provider, r.TimestampUtc })
+            .ToListAsync();
+
+        var succeededVins = await _db.RequestLogs
+            .Where(r => r.Success)
+            .Select(r => r.Vin)
+            .Distinct()
+            .ToListAsync();
+
+        var succeededSet = succeededVins.ToHashSet();
+
+        var failedGroups = failedLogs
+            .GroupBy(r => r.Vin)
+            .Where(g => g.Count() >= minFailures)
+            .Select(g => new
+            {
+                vin = g.Key,
+                failureCount = g.Count(),
+                lastAttempt = g.Max(r => r.TimestampUtc),
+                statusCodes = g.Select(r => r.StatusCode).Distinct().OrderBy(c => c).ToList(),
+                providersTried = g.Select(r => r.Provider).Where(p => p != "").Distinct().ToList(),
+                hasSucceeded = succeededSet.Contains(g.Key)
+            })
+            .OrderByDescending(g => g.failureCount)
+            .ToList();
+
+        var total = failedGroups.Count;
+        var paged = failedGroups
+            .Skip((page - 1) * size)
+            .Take(size)
+            .ToList();
+
+        var neverSucceeded = paged.Count(v => !v.hasSucceeded);
+
+        return Ok(new
+        {
+            total,
+            page,
+            size,
+            neverSucceeded,
+            vins = paged
+        });
     }
 
     // ??? Helpers ????????????????????????????????????????????????????

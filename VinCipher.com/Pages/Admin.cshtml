@@ -8,7 +8,7 @@
 <title>VinCipher Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="~/css/admin.min.css">
+<link rel="stylesheet" href="~/css/admin.min.css" asp-append-version="true">
 </head>
 <body>
 
@@ -40,6 +40,7 @@
     <div class="tabs">
         <button class="tab active" data-tab="accounts" onclick="Admin.switchTab('accounts')">Comptes</button>
         <button class="tab" data-tab="requests" onclick="Admin.switchTab('requests')">Demandes d&#39;acc&egrave;s</button>
+        <button class="tab" data-tab="failed" onclick="Admin.switchTab('failed')">&#9888; VINs &eacute;chou&eacute;s</button>
         <button class="tab" data-tab="admins" onclick="Admin.switchTab('admins')">Administrateurs</button>
     </div>
     <div id="tab-accounts">
@@ -49,6 +50,10 @@
     <div id="tab-requests" class="hidden">
         <div class="section-title">Demandes d&#39;acc&egrave;s &agrave; l&#39;API</div>
         <div id="requestsList"></div>
+    </div>
+    <div id="tab-failed" class="hidden">
+        <div class="section-title">VINs en &eacute;chec &mdash; sources &agrave; envisager</div>
+        <div id="failedVinsList"></div>
     </div>
     <div id="tab-admins" class="hidden">
         <div class="section-title">
@@ -64,6 +69,6 @@
 </div>
 <div class="toast" id="toast"></div>
 
-<script src="~/js/admin.min.js"></script>
+<script src="~/js/admin.js" asp-append-version="true"></script>
 </body>
 </html>

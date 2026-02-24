@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="~/css/site.min.css">
+    <link rel="stylesheet" href="~/css/site.min.css" asp-append-version="true">
 </head>
 <body>
     <nav class="navbar" role="navigation" aria-label="Navigation principale">
@@ -286,6 +286,6 @@
     <div class="toast" id="toast"></div>
 
     <script>window.__VC_K=[@Html.Raw(Model.HmacKeyJson)];</script>
-    <script src="~/js/site.min.js"></script>
+    <script src="~/js/site.min.js" asp-append-version="true"></script>
 </body>
 </html>

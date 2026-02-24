@@ -24,7 +24,16 @@ namespace Services.DataServices
         public async Task<Dictionary<string, string>> IdentifyCarByVINAsync(string vin, int us = 0)
         {
             var uri = await _source.GetUrlAsync(vin, us);
-            var page = await _httpClient.GetStringAsync(uri);
+
+            string page;
+            try
+            {
+                page = await _httpClient.GetStringAsync(uri);
+            }
+            catch (HttpRequestException)
+            {
+                return new Dictionary<string, string>();
+            }
 
             var doc = new HtmlDocument();
             doc.LoadHtml(page);

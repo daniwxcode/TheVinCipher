@@ -1,4 +1,5 @@
 
+
 using Domaine.Entities;
 
 using Infrastructure.APIs.Abstracts;
@@ -14,6 +15,7 @@ using Services.DataServices;
 using Services.Interfaces;
 
 using VinCipher.Model;
+using VinCipher.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 ConfigurationManager configuration = builder.Configuration;
@@ -23,6 +25,8 @@ builder.Services.AddDbContext<PlaygroundDbContext>(options =>
 builder.Services.AddSingleton<BaseApiProvider, VincarioProvider>(_ => new VincarioProvider(configuration));
 builder.Services.AddSingleton<BaseApiProvider, VinAuditProvider>(_ => new VinAuditProvider(configuration));
 builder.Services.AddHttpClient<VinRushScrapper>();
+builder.Services.AddHttpClient<VinCypScrapper>();
+builder.Services.AddHttpClient<FreeVinDecoderScrapper>();
 builder.Services.AddSingleton<IScrappableSource, VinRusUrlGenerator>();
 builder.Services.AddSingleton<TokensProvider>(_ => new TokensProvider(configuration));
 builder.Services.AddSingleton<VinDecodeCache>();
@@ -48,6 +52,8 @@ builder.Services.AddSingleton(_ =>
         ?? throw new InvalidOperationException("Playground:HmacSecret is not configured.");
     return new PlaygroundChallenge(secret);
 });
+
+builder.Services.AddSingleton<AdminEventBus>();
 
 builder.Services.AddControllers();
 builder.Services.AddRazorPages();
@@ -118,23 +124,23 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseStaticFiles(new StaticFileOptions
+// Block direct access to .html files in wwwroot
+app.Use(async (ctx, next) =>
 {
-    OnPrepareResponse = ctx =>
+    if (ctx.Request.Path.Value?.EndsWith(".html", StringComparison.OrdinalIgnoreCase) == true)
     {
-        // Block direct access to any remaining .html files in wwwroot
-        if (ctx.File.Name.EndsWith(".html"))
-        {
-            ctx.Context.Response.StatusCode = 404;
-            ctx.Context.Response.ContentLength = 0;
-            ctx.Context.Response.Body = Stream.Null;
-        }
+        ctx.Response.StatusCode = 404;
+        return;
     }
+    await next();
 });
 
 app.UseAuthorization();
 
 app.MapRazorPages();
 app.MapControllers();
+
+// Static files with build-time compression (gzip + brotli), ETags and cache fingerprinting
+app.MapStaticAssets();
 
 app.Run();

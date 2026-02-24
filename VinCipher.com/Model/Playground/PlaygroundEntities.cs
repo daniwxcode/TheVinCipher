@@ -75,6 +75,12 @@ public class RequestLog
 
     public int ResponseTimeMs { get; set; }
 
+    /// <summary>
+    /// Which service actually provided the decode (e.g. "VinRush", "NHTSA", "VinRush-US", "Cache").
+    /// </summary>
+    [MaxLength(30)]
+    public string Provider { get; set; } = "";
+
     public DateTime TimestampUtc { get; set; } = DateTime.UtcNow;
 
     public PlaygroundApiToken Token { get; set; } = null!;

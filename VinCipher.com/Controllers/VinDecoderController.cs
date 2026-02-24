@@ -10,6 +10,7 @@ using Services.DataServices;
 
 using VinCipher.Model;
 using VinCipher.Model.Playground;
+using VinCipher.Services;
 
 namespace VinCipher.Controllers;
 
@@ -18,26 +19,35 @@ namespace VinCipher.Controllers;
 public partial class VinDecoderController : ControllerBase
 {
     private readonly VinRushScrapper _scrapper;
+    private readonly VinCypScrapper _vinCyp;
+    private readonly FreeVinDecoderScrapper _freeVin;
     private readonly TokensProvider _tokenProvider;
     private readonly VinDecoderRateLimiter _rateLimiter;
     private readonly VinDecodeCache _vinCache;
     private readonly PlaygroundDbContext? _pgDb;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly AdminEventBus? _eventBus;
 
     public VinDecoderController(
         TokensProvider tokensProvider,
         VinRushScrapper vinRushScrapper,
+        VinCypScrapper vinCypScrapper,
+        FreeVinDecoderScrapper freeVinDecoderScrapper,
         VinDecoderRateLimiter rateLimiter,
         VinDecodeCache vinCache,
         IHttpClientFactory httpClientFactory,
-        PlaygroundDbContext? pgDb = null)
+        PlaygroundDbContext? pgDb = null,
+        AdminEventBus? eventBus = null)
     {
         _scrapper = vinRushScrapper;
+        _vinCyp = vinCypScrapper;
+        _freeVin = freeVinDecoderScrapper;
         _tokenProvider = tokensProvider;
         _rateLimiter = rateLimiter;
         _vinCache = vinCache;
         _httpClientFactory = httpClientFactory;
         _pgDb = pgDb;
+        _eventBus = eventBus;
     }
 
     /// <summary>
@@ -75,14 +85,20 @@ public partial class VinDecoderController : ControllerBase
         var startTime = Stopwatch.GetTimestamp();
 
         // Return cached result if available (24h TTL)
+        string provider;
         ActionResult<Dictionary<string, string>> result;
         if (_vinCache.TryGet(vin[..11], out var cachedResult))
+        {
             result = Ok(cachedResult);
+            provider = "Cache";
+        }
         else
-            result = await ScrapeAndCacheAsync(vin, cancellationToken);
+        {
+            (result, provider) = await ScrapeAndCacheAsync(vin, cancellationToken);
+        }
 
         var elapsedMs = (int)Stopwatch.GetElapsedTime(startTime).TotalMilliseconds;
-        await LogRequestAsync(token, vin, result, elapsedMs, cancellationToken);
+        await LogRequestAsync(token, vin, result, elapsedMs, provider, cancellationToken);
 
         return result;
     }
@@ -91,7 +107,7 @@ public partial class VinDecoderController : ControllerBase
     /// Logs the request to PlaygroundDbContext if the token maps to a playground API token.
     /// Skipped when pgDb is null (i.e. when called from PlaygroundController which has its own logging).
     /// </summary>
-    private async Task LogRequestAsync(string token, string vin, ActionResult<Dictionary<string, string>> result, int elapsedMs, CancellationToken cancellationToken)
+    private async Task LogRequestAsync(string token, string vin, ActionResult<Dictionary<string, string>> result, int elapsedMs, string provider, CancellationToken cancellationToken)
     {
         if (_pgDb is null) return;
 
@@ -115,39 +131,77 @@ public partial class VinDecoderController : ControllerBase
             Vin = vin,
             StatusCode = statusCode,
             Success = statusCode is >= 200 and < 300,
-            ResponseTimeMs = elapsedMs
+            ResponseTimeMs = elapsedMs,
+            Provider = provider
         });
 
         await _pgDb.SaveChangesAsync(cancellationToken);
+
+        _eventBus?.PublishRequestLogged(vin, statusCode, statusCode is >= 200 and < 300, elapsedMs, provider);
     }
 
-    private async Task<ActionResult<Dictionary<string, string>>> ScrapeAndCacheAsync(string vin, CancellationToken cancellationToken)
+    private async Task<(ActionResult<Dictionary<string, string>> Result, string Provider)> ScrapeAndCacheAsync(string vin, CancellationToken cancellationToken)
     {
+        // 1. VinRush (primary)
         var result = await _scrapper.IdentifyCarByVINAsync(vin);
         result.TryAdd("model_year", vin.GetModelYear().ToString());
 
-        if (result.Count <= 17)
+        if (result.Count > 17)
         {
-            result = await RequestUsBaseAsync(vin, cancellationToken);
-            ParseAndClean(result);
+            result.Remove("Base Price");
+            _vinCache.Set(vin[..11], result);
+            return (Ok(result), "VinRush");
+        }
 
-            if (result.Count < 17)
+        // 2. NHTSA (US federal database)
+        result = await RequestUsBaseAsync(vin, cancellationToken);
+        ParseAndClean(result);
+
+        if (result.Count >= 17)
+        {
+            _vinCache.Set(vin[..11], result);
+            return (Ok(result), "NHTSA");
+        }
+
+        // 3. VinRush US mode
+        result = await _scrapper.IdentifyCarByVINAsync(vin, 1);
+        ParseAndClean(result);
+
+        if (result.Count > 17)
+        {
+            _vinCache.Set(vin[..11], result);
+            return (Ok(result), "VinRush-US");
+        }
+
+        // 4. VinCyP
+        var cypResult = await _vinCyp.DecodeAsync(vin, cancellationToken);
+        if (cypResult.Count > 0)
+        {
+            ParseAndClean(cypResult);
+            cypResult.TryAdd("model_year", vin.GetModelYear().ToString());
+
+            if (cypResult.Count > 5)
             {
-                result = await _scrapper.IdentifyCarByVINAsync(vin, 1);
-                ParseAndClean(result);
-
-                if (result.Count > 17)
-                {
-                    _vinCache.Set(vin[..11], result);
-                    return Ok(result);
-                }
-                return NotFound(result);
+                _vinCache.Set(vin[..11], cypResult);
+                return (Ok(cypResult), "VinCyP");
             }
         }
 
-        result.Remove("Base Price");
-        _vinCache.Set(vin[..11], result);
-        return Ok(result);
+        // 5. FreeVinDecoder.eu (last resort)
+        var freeResult = await _freeVin.DecodeAsync(vin, cancellationToken);
+        if (freeResult.Count > 0)
+        {
+            ParseAndClean(freeResult);
+            freeResult.TryAdd("model_year", vin.GetModelYear().ToString());
+
+            if (freeResult.Count > 5)
+            {
+                _vinCache.Set(vin[..11], freeResult);
+                return (Ok(freeResult), "FreeVinDecoder");
+            }
+        }
+
+        return (NotFound(result), "NotFound");
     }
 
     private async Task<Dictionary<string, string>> RequestUsBaseAsync(string vin, CancellationToken cancellationToken)

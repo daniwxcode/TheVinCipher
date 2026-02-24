@@ -9,6 +9,7 @@ using Services.Interfaces;
 
 using VinCipher.Model;
 using VinCipher.Model.Playground;
+using VinCipher.Services;
 
 namespace VinCipher.Controllers;
 
@@ -32,6 +33,7 @@ public class PlaygroundController : ControllerBase
     private readonly VinDecodeCache _vinCache;
     private readonly int _previewFieldCount;
     private readonly ILogger<PlaygroundController> _logger;
+    private readonly AdminEventBus _eventBus;
 
     private static readonly HashSet<string> PreviewKeys = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -41,6 +43,8 @@ public class PlaygroundController : ControllerBase
     public PlaygroundController(
         TokensProvider tokensProvider,
         VinRushScrapper vinRushScrapper,
+        VinCypScrapper vinCypScrapper,
+        FreeVinDecoderScrapper freeVinDecoderScrapper,
         IConfiguration configuration,
         PlaygroundRateLimiter rateLimiter,
         PlaygroundChallenge challenge,
@@ -48,9 +52,10 @@ public class PlaygroundController : ControllerBase
         PlaygroundDbContext pgDb,
         VinDecodeCache vinCache,
         IHttpClientFactory httpClientFactory,
-        ILogger<PlaygroundController> logger)
+        ILogger<PlaygroundController> logger,
+        AdminEventBus eventBus)
     {
-        _decoder = new VinDecoderController(tokensProvider, vinRushScrapper, decoderRateLimiter, vinCache, httpClientFactory);
+        _decoder = new VinDecoderController(tokensProvider, vinRushScrapper, vinCypScrapper, freeVinDecoderScrapper, decoderRateLimiter, vinCache, httpClientFactory);
         _playgroundToken = configuration["PlaygroundToken"]
             ?? throw new InvalidOperationException("PlaygroundToken is not configured.");
         _rateLimiter = rateLimiter;
@@ -60,6 +65,7 @@ public class PlaygroundController : ControllerBase
         _vinCache = vinCache;
         _previewFieldCount = configuration.GetValue("Playground:PreviewFieldCount", 6);
         _logger = logger;
+        _eventBus = eventBus;
     }
 
     /// <summary>
@@ -207,6 +213,7 @@ public class PlaygroundController : ControllerBase
                 statusCode = r.StatusCode,
                 success = r.Success,
                 responseTimeMs = r.ResponseTimeMs,
+                provider = r.Provider,
                 timestamp = r.TimestampUtc
             })
             .ToListAsync();
@@ -302,8 +309,16 @@ public class PlaygroundController : ControllerBase
         var startTime = Stopwatch.GetTimestamp();
 
         Dictionary<string, string>? data = null;
+        string provider;
         if (_vinCache.TryGet(vin, out var cached))
+        {
             data = cached;
+            provider = "Cache";
+        }
+        else
+        {
+            provider = "Decoder";
+        }
 
         var result = data is not null
             ? new ActionResult<Dictionary<string, string>>(Ok(data))
@@ -327,9 +342,12 @@ public class PlaygroundController : ControllerBase
             Vin = vin,
             StatusCode = statusCode,
             Success = statusCode is >= 200 and < 300,
-            ResponseTimeMs = elapsed
+            ResponseTimeMs = elapsed,
+            Provider = provider
         });
         await _pgDb.SaveChangesAsync();
+
+        _eventBus.PublishRequestLogged(vin, statusCode, statusCode is >= 200 and < 300, elapsed, provider);
 
         if (result.Result is OkObjectResult ok && ok.Value is Dictionary<string, string> fullData)
         {
@@ -389,9 +407,15 @@ public class PlaygroundController : ControllerBase
 
         // Check 24h in-memory cache first
         Dictionary<string, string>? cachedData = null;
+        string provider;
         if (_vinCache.TryGet(vin, out var cached))
         {
             cachedData = cached;
+            provider = "Cache";
+        }
+        else
+        {
+            provider = "Decoder";
         }
 
         var result = cachedData is not null
@@ -400,7 +424,7 @@ public class PlaygroundController : ControllerBase
 
         var elapsed = (int)Stopwatch.GetElapsedTime(startTime).TotalMilliseconds;
 
-        await LogRequestAsync(vin, result, elapsed);
+        await LogRequestAsync(vin, result, elapsed, provider);
 
         if (result.Result is OkObjectResult ok && ok.Value is Dictionary<string, string> fullData)
         {
@@ -435,7 +459,7 @@ public class PlaygroundController : ControllerBase
         return result;
     }
 
-    private async Task LogRequestAsync(string vin, ActionResult<Dictionary<string, string>> result, int elapsedMs)
+    private async Task LogRequestAsync(string vin, ActionResult<Dictionary<string, string>> result, int elapsedMs, string provider)
     {
         var statusCode = result.Result switch
         {
@@ -461,10 +485,13 @@ public class PlaygroundController : ControllerBase
             Vin = vin,
             StatusCode = statusCode,
             Success = statusCode is >= 200 and < 300,
-            ResponseTimeMs = elapsedMs
+            ResponseTimeMs = elapsedMs,
+            Provider = provider
         });
 
         await _pgDb.SaveChangesAsync();
+
+        _eventBus.PublishRequestLogged(vin, statusCode, statusCode is >= 200 and < 300, elapsedMs, provider);
     }
 
     private async Task<(PlaygroundAccount? Account, ActionResult? Error)> AuthenticateAsync()
