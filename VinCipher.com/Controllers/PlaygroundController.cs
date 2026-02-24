@@ -486,9 +486,27 @@ public class PlaygroundController : ControllerBase
     {
         var forwarded = Request.Headers["X-Forwarded-For"].FirstOrDefault();
         if (!string.IsNullOrEmpty(forwarded))
-            return forwarded.Split(',', StringSplitOptions.TrimEntries)[0];
+        {
+            var ip = forwarded.Split(',', StringSplitOptions.TrimEntries)[0];
+            return SanitizeIpForLogging(ip);
+        }
 
-        return HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return SanitizeIpForLogging(remoteIp);
+    }
+
+    private static string SanitizeIpForLogging(string ip)
+    {
+        if (string.IsNullOrEmpty(ip))
+            return string.Empty;
+
+        // Strip control characters and normalize whitespace to prevent log-forging via crafted headers.
+        var sanitized = ip
+            .Replace("\r", string.Empty)
+            .Replace("\n", string.Empty)
+            .Trim();
+
+        return sanitized;
     }
 
     private static string FormatRetry(int seconds)
