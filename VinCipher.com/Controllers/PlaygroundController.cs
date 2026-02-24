@@ -41,7 +41,6 @@ public class PlaygroundController : ControllerBase
     public PlaygroundController(
         TokensProvider tokensProvider,
         VinRushScrapper vinRushScrapper,
-        ICrudServices crudServices,
         IConfiguration configuration,
         PlaygroundRateLimiter rateLimiter,
         PlaygroundChallenge challenge,
@@ -50,7 +49,7 @@ public class PlaygroundController : ControllerBase
         VinDecodeCache vinCache,
         ILogger<PlaygroundController> logger)
     {
-        _decoder = new VinDecoderController(tokensProvider, vinRushScrapper, crudServices, decoderRateLimiter, vinCache);
+        _decoder = new VinDecoderController(tokensProvider, vinRushScrapper, decoderRateLimiter, vinCache);
         _playgroundToken = configuration["PlaygroundToken"]
             ?? throw new InvalidOperationException("PlaygroundToken is not configured.");
         _rateLimiter = rateLimiter;
@@ -363,7 +362,7 @@ public class PlaygroundController : ControllerBase
 
         if (!_challenge.Verify(vin, timestamp, signature ?? ""))
         {
-            _logger.LogWarning("Playground HMAC challenge failed for VIN {Vin}, t={Timestamp}", vin, timestamp);
+            _logger.LogWarning("Playground HMAC challenge failed for VIN {Vin}, t={Timestamp}", SanitizeForLog(vin), timestamp);
             return StatusCode(403, new { error = "Signature invalide", message = "Requête non autorisée." });
         }
 
@@ -488,25 +487,25 @@ public class PlaygroundController : ControllerBase
         if (!string.IsNullOrEmpty(forwarded))
         {
             var ip = forwarded.Split(',', StringSplitOptions.TrimEntries)[0];
-            return SanitizeIpForLogging(ip);
+            return SanitizeForLog(ip);
         }
 
         var remoteIp = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        return SanitizeIpForLogging(remoteIp);
+        return SanitizeForLog(remoteIp);
     }
 
-    private static string SanitizeIpForLogging(string ip)
+    /// <summary>
+    /// Strips control characters (CR, LF) from a string to prevent log-forging.
+    /// </summary>
+    private static string SanitizeForLog(string? value)
     {
-        if (string.IsNullOrEmpty(ip))
+        if (string.IsNullOrEmpty(value))
             return string.Empty;
 
-        // Strip control characters and normalize whitespace to prevent log-forging via crafted headers.
-        var sanitized = ip
+        return value
             .Replace("\r", string.Empty)
             .Replace("\n", string.Empty)
             .Trim();
-
-        return sanitized;
     }
 
     private static string FormatRetry(int seconds)

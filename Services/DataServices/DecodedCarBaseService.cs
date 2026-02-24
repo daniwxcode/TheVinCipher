@@ -11,13 +11,11 @@ namespace Services.DataServices
 {
     public class DecodedCarBaseService : IHttpConsumtionServices
     {
-        private readonly VinCipherContext _dbContext;
         private readonly BaseApiProviderClient<CarBase> _api;
         private readonly BaseApiProvider _baseApiProvider;
         private readonly ICarService _carService;
-        public DecodedCarBaseService (VinCipherContext context, HttpClient httpClient, BaseApiProvider apiProvider, BaseApiProviderClient<CarBase> client, ICarService carService)
+        public DecodedCarBaseService ( HttpClient httpClient, BaseApiProvider apiProvider, BaseApiProviderClient<CarBase> client, ICarService carService)
         {
-            _dbContext = context;
             _baseApiProvider = apiProvider;
             _carService = carService;
             _api = client;

@@ -96,13 +96,22 @@ public class AdminUser
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 
     /// <summary>
-    /// Session key generated on login, used to authenticate admin API calls.
-    /// Rotated on every login.
+    /// SHA-256 hash of the session key. The plaintext key is returned to the admin only once at login.
+    /// Stored as a hex string so that DB access alone cannot be used to impersonate an admin.
     /// </summary>
     [MaxLength(100)]
     public string? SessionKey { get; set; }
 
     public DateTime? SessionExpiresAtUtc { get; set; }
+
+    /// <summary>
+    /// Computes a SHA-256 hex hash of a plaintext session key for secure storage/comparison.
+    /// </summary>
+    public static string HashSessionKey(string plaintextKey)
+    {
+        var hash = SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(plaintextKey));
+        return Convert.ToHexStringLower(hash);
+    }
 
     public void SetPassword(string plaintext)
     {

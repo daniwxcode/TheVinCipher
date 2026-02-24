@@ -21,7 +21,6 @@ public partial class VinDecoderController : ControllerBase
 {
     private readonly VinRushScrapper _scrapper;
     private readonly TokensProvider _tokenProvider;
-    private readonly ICrudServices _requestsBase;
     private readonly VinDecoderRateLimiter _rateLimiter;
     private readonly VinDecodeCache _vinCache;
     private readonly PlaygroundDbContext? _pgDb;
@@ -29,14 +28,13 @@ public partial class VinDecoderController : ControllerBase
     public VinDecoderController(
         TokensProvider tokensProvider,
         VinRushScrapper vinRushScrapper,
-        ICrudServices crudServices,
+       
         VinDecoderRateLimiter rateLimiter,
         VinDecodeCache vinCache,
         PlaygroundDbContext? pgDb = null)
     {
         _scrapper = vinRushScrapper;
         _tokenProvider = tokensProvider;
-        _requestsBase = crudServices;
         _rateLimiter = rateLimiter;
         _vinCache = vinCache;
         _pgDb = pgDb;
@@ -66,8 +64,7 @@ public partial class VinDecoderController : ControllerBase
 
         if (vin.Contains('O') || vin.Contains('Q') || vin.Contains('I'))
         {
-            await _requestsBase.Ajouter($"Vin Incorect: {vin}");
-            return BadRequest($"Vin Incorect: {vin}");
+            return BadRequest(new { error = "VIN invalide", message = "Le VIN contient des caractères interdits (O, Q, I)." });
         }
 
         var startTime = Stopwatch.GetTimestamp();
@@ -140,8 +137,6 @@ public partial class VinDecoderController : ControllerBase
                     _vinCache.Set(vin, result);
                     return Ok(result);
                 }
-
-                await _requestsBase.Ajouter(vin);
                 return NotFound(result);
             }
         }

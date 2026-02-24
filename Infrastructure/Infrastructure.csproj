@@ -13,6 +13,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Contexts\VinCipherContext.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Contexts\" />
     <Folder Include="Interfaces\" />
   </ItemGroup>
 

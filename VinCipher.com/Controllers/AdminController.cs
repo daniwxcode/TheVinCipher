@@ -49,12 +49,13 @@ public class AdminController : ControllerBase
         var admin = await _db.AdminUsers.FirstOrDefaultAsync(a => a.Username == request.Username);
         if (admin is null || !admin.VerifyPassword(request.Password))
         {
-            _logger.LogWarning("Admin login failed for username {Username}", request.Username);
+            _logger.LogWarning("Admin login failed for username {Username}", SanitizeForLog(request.Username));
             return Unauthorized(new { error = "Identifiants invalides." });
         }
 
         var hours = _config.GetValue("Admin:SessionDurationHours", 8);
-        admin.SessionKey = $"ADM-{Convert.ToHexString(RandomNumberGenerator.GetBytes(24))}";
+        var plaintextSessionKey = $"ADM-{Convert.ToHexString(RandomNumberGenerator.GetBytes(24))}";
+        admin.SessionKey = AdminUser.HashSessionKey(plaintextSessionKey);
         admin.SessionExpiresAtUtc = DateTime.UtcNow.AddHours(hours);
         await _db.SaveChangesAsync();
 
@@ -62,7 +63,7 @@ public class AdminController : ControllerBase
 
         return Ok(new
         {
-            sessionKey = admin.SessionKey,
+            sessionKey = plaintextSessionKey,
             expiresAt = admin.SessionExpiresAtUtc,
             username = admin.Username,
             isRoot = admin.IsRoot
@@ -626,11 +627,26 @@ public class AdminController : ControllerBase
         if (string.IsNullOrWhiteSpace(key))
             return (null, Unauthorized(new { error = "Header X-Admin-Key requis." }));
 
-        var admin = await _db.AdminUsers.FirstOrDefaultAsync(a => a.SessionKey == key);
+        var hashedKey = AdminUser.HashSessionKey(key);
+        var admin = await _db.AdminUsers.FirstOrDefaultAsync(a => a.SessionKey == hashedKey);
         if (admin is null || admin.SessionExpiresAtUtc is null || admin.SessionExpiresAtUtc < DateTime.UtcNow)
             return (null, Unauthorized(new { error = "Session admin invalide ou expirée." }));
 
         return (admin, null);
+    }
+
+    /// <summary>
+    /// Strips control characters (CR, LF) from a string to prevent log-forging.
+    /// </summary>
+    private static string SanitizeForLog(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return string.Empty;
+
+        return value
+            .Replace("\r", string.Empty)
+            .Replace("\n", string.Empty)
+            .Trim();
     }
 }
 

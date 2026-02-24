@@ -1,13 +1,10 @@
 
 using Domaine.Entities;
 
-using VinCipher.Model;
-
 using Infrastructure.APIs.Abstracts;
 using Infrastructure.APIs.Interfaces;
 using Infrastructure.APIs.VinCario.Services;
 using Infrastructure.APIs.VinRush.Models;
-using Infrastructure.Contexts;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -16,15 +13,17 @@ using Scalar.AspNetCore;
 using Services.DataServices;
 using Services.Interfaces;
 
+using VinCipher.Model;
+
 var builder = WebApplication.CreateBuilder(args);
 ConfigurationManager configuration = builder.Configuration;
 // Add services to the container.
 
-builder.Services.AddDbContext<VinCipherContext>(option =>
-{
-    option.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
+//builder.Services.AddDbContext<VinCipherContext>(option =>
+//{
+//    option.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
 
-});
+//});
 builder.Services.AddDbContext<PlaygroundDbContext>(options =>
     options.UseSqlite("Data Source=playground.db"));
 builder.Services.AddSingleton<BaseApiProvider, VincarioProvider>(_ => new VincarioProvider(configuration));
@@ -33,13 +32,8 @@ builder.Services.AddScoped<VinRushScrapper>();
 builder.Services.AddSingleton<IScrappableSource, VinRusUrlGenerator>();
 builder.Services.AddSingleton<TokensProvider>(_ => new TokensProvider(configuration));
 builder.Services.AddSingleton<VinDecodeCache>();
-builder.Services.AddScoped<ICrudServices, VinToSearchServices>();
-builder.Services.AddScoped<ICarService, BaseCarServices>();
 builder.Services.AddHttpClient<BaseApiProviderClient<CarBase>, VincarioApiClient>();
 builder.Services.AddHttpClient<BaseApiProviderClient<CarBase>, VinAuditApiClient>();
-
-builder.Services.AddHttpClient<IHttpConsumtionServices, DecodedCarBaseService>();
-
 builder.Services.AddSingleton(_ =>
 {
     var playground = configuration.GetSection("Playground");
@@ -76,13 +70,15 @@ using (var scope = app.Services.CreateScope())
     // Seed root admin if not present
     if (!pgDb.AdminUsers.Any(a => a.IsRoot))
     {
+        var rootPassword = configuration["Admin:RootPassword"]
+                ?? throw new InvalidOperationException("Admin:RootPassword must be configured. Do not use a hardcoded default.");
         var rootUser = new VinCipher.Model.Playground.AdminUser
         {
             Id = Guid.NewGuid(),
             Username = configuration["Admin:RootUsername"] ?? "root",
             IsRoot = true
         };
-        rootUser.SetPassword(configuration["Admin:RootPassword"] ?? "VinCipher@Admin2025!");
+        rootUser.SetPassword(rootPassword);
         pgDb.AdminUsers.Add(rootUser);
         pgDb.SaveChanges();
     }
@@ -114,7 +110,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference(options =>
