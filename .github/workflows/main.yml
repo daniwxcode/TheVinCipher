@@ -1,0 +1,39 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Publish
+      run: dotnet publish VinCipher.com/VinCipher.com.csproj -c Release -o publish
+      env:
+        ConnectionStrings__DefaultConnection: ${{ secrets.DB_CONN }}
+        Playground__HmacSecret: ${{ secrets.HMAC_SECRET }}
+        Admin__RootUsername: ${{ secrets.ADMIN_ROOT_USER }}
+        Admin__RootPassword: ${{ secrets.ADMIN_ROOT_PASSWORD }}
+
+    - name: Configure SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: Copy files to VPS
+      run: |
+        ssh -o StrictHostKeyChecking=no root@62.171.155.200 "rm -rf /tmp/vincipher-deploy && mkdir -p /tmp/vincipher-deploy"
+        scp -r publish/* root@62.171.155.200:/tmp/vincipher-deploy/
+        scp deploy/deploy.sh root@62.171.155.200:/tmp/vincipher-deploy/
+
+    - name: Run deploy script on VPS
+      run: ssh root@62.171.155.200 "chmod +x /tmp/vincipher-deploy/deploy.sh && sudo /tmp/vincipher-deploy/deploy.sh"
