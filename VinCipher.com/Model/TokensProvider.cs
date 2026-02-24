@@ -1,6 +1,4 @@
-﻿using System.Security.Cryptography;
-
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 
 namespace VinCipher.Model
 {
@@ -32,14 +30,13 @@ namespace VinCipher.Model
 
     public class TokensProvider
     {
-        private readonly ConfigurationManager _configurationManager;
+        private readonly object _lock = new();
+        private readonly List<TokenInfo> _tokens;
 
-        public TokensProvider (ConfigurationManager configurationManager)
+        public TokensProvider(ConfigurationManager configurationManager)
         {
-            _configurationManager = configurationManager;
-            Tokens = _configurationManager.GetSection("Tokens").Get<List<TokenInfo>>() ?? new List<TokenInfo>();
+            _tokens = configurationManager.GetSection("Tokens").Get<List<TokenInfo>>() ?? [];
         }
-        private List<TokenInfo> Tokens { get; set; } = new();
 
         public bool IsValid(string token, out TokenInfo? tokenInfo)
         {
@@ -48,8 +45,12 @@ namespace VinCipher.Model
             if (string.IsNullOrEmpty(token))
                 return false;
 
-            tokenInfo = Tokens.FirstOrDefault(t => t.Token == token);
-            return tokenInfo != null && !tokenInfo.IsExpired();
+            lock (_lock)
+            {
+                tokenInfo = _tokens.FirstOrDefault(t => t.Token == token);
+            }
+
+            return tokenInfo is not null && !tokenInfo.IsExpired();
         }
 
         /// <summary>
@@ -58,12 +59,15 @@ namespace VinCipher.Model
         /// </summary>
         public void AddPlaygroundToken(string key, DateTime expiresAtUtc)
         {
-            Tokens.Add(new TokenInfo
+            lock (_lock)
             {
-                Token = key,
-                AllowedFunctions = [AllowedFunction.Decode],
-                DateLimite = expiresAtUtc
-            });
+                _tokens.Add(new TokenInfo
+                {
+                    Token = key,
+                    AllowedFunctions = [AllowedFunction.Decode],
+                    DateLimite = expiresAtUtc
+                });
+            }
         }
     }
 }

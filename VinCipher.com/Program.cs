@@ -28,7 +28,7 @@ builder.Services.AddDbContext<PlaygroundDbContext>(options =>
     options.UseSqlite("Data Source=playground.db"));
 builder.Services.AddSingleton<BaseApiProvider, VincarioProvider>(_ => new VincarioProvider(configuration));
 builder.Services.AddSingleton<BaseApiProvider, VinAuditProvider>(_ => new VinAuditProvider(configuration));
-builder.Services.AddScoped<VinRushScrapper>();
+builder.Services.AddHttpClient<VinRushScrapper>();
 builder.Services.AddSingleton<IScrappableSource, VinRusUrlGenerator>();
 builder.Services.AddSingleton<TokensProvider>(_ => new TokensProvider(configuration));
 builder.Services.AddSingleton<VinDecodeCache>();

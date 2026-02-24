@@ -1,13 +1,12 @@
-﻿using Flurl.Http;
+﻿using System.Collections.Frozen;
+using System.Diagnostics;
+using System.Net.Http.Json;
+using System.Text.RegularExpressions;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 using Services.DataServices;
-
-using System.Collections.Frozen;
-using System.Diagnostics;
-using System.Text.RegularExpressions;
 
 using VinCipher.Model;
 using VinCipher.Model.Playground;
@@ -23,19 +22,21 @@ public partial class VinDecoderController : ControllerBase
     private readonly VinDecoderRateLimiter _rateLimiter;
     private readonly VinDecodeCache _vinCache;
     private readonly PlaygroundDbContext? _pgDb;
+    private readonly IHttpClientFactory _httpClientFactory;
 
     public VinDecoderController(
         TokensProvider tokensProvider,
         VinRushScrapper vinRushScrapper,
-
         VinDecoderRateLimiter rateLimiter,
         VinDecodeCache vinCache,
+        IHttpClientFactory httpClientFactory,
         PlaygroundDbContext? pgDb = null)
     {
         _scrapper = vinRushScrapper;
         _tokenProvider = tokensProvider;
         _rateLimiter = rateLimiter;
         _vinCache = vinCache;
+        _httpClientFactory = httpClientFactory;
         _pgDb = pgDb;
     }
 
@@ -45,13 +46,18 @@ public partial class VinDecoderController : ControllerBase
     /// </summary>
     [HttpGet]
     [HttpPost]
-    public async Task<ActionResult<Dictionary<string, string>>> Decode(string token, string vin)
+    public async Task<ActionResult<Dictionary<string, string>>> Decode(string token, string vin, CancellationToken cancellationToken)
     {
         if (!_tokenProvider.IsValid(token, out var tokenInfo)
             || !tokenInfo.IsFunctionAllowed(AllowedFunction.Decode))
         {
             return Unauthorized(new MarketValueResponse("Token Invalid"));
         }
+
+        if (string.IsNullOrWhiteSpace(vin) || vin.Length != 17)
+            return BadRequest(new { error = "VIN invalide", message = "Le VIN doit contenir exactement 17 caractères." });
+
+        vin = vin.Trim().ToUpperInvariant();
 
         var (allowed, _, retryAfter) = _rateLimiter.TryAcquire(token);
         if (!allowed)
@@ -73,10 +79,10 @@ public partial class VinDecoderController : ControllerBase
         if (_vinCache.TryGet(vin, out var cachedResult))
             result = Ok(cachedResult);
         else
-            result = await ScrapeAndCacheAsync(vin);
+            result = await ScrapeAndCacheAsync(vin, cancellationToken);
 
         var elapsedMs = (int)Stopwatch.GetElapsedTime(startTime).TotalMilliseconds;
-        await LogRequestAsync(token, vin, result, elapsedMs);
+        await LogRequestAsync(token, vin, result, elapsedMs, cancellationToken);
 
         return result;
     }
@@ -85,12 +91,12 @@ public partial class VinDecoderController : ControllerBase
     /// Logs the request to PlaygroundDbContext if the token maps to a playground API token.
     /// Skipped when pgDb is null (i.e. when called from PlaygroundController which has its own logging).
     /// </summary>
-    private async Task LogRequestAsync(string token, string vin, ActionResult<Dictionary<string, string>> result, int elapsedMs)
+    private async Task LogRequestAsync(string token, string vin, ActionResult<Dictionary<string, string>> result, int elapsedMs, CancellationToken cancellationToken)
     {
         if (_pgDb is null) return;
 
         var apiToken = await _pgDb.ApiTokens
-            .FirstOrDefaultAsync(t => t.Key == token && t.IsActive);
+            .FirstOrDefaultAsync(t => t.Key == token && t.IsActive, cancellationToken);
 
         if (apiToken is null) return;
 
@@ -112,18 +118,17 @@ public partial class VinDecoderController : ControllerBase
             ResponseTimeMs = elapsedMs
         });
 
-        await _pgDb.SaveChangesAsync();
+        await _pgDb.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task<ActionResult<Dictionary<string, string>>> ScrapeAndCacheAsync(string vin)
+    private async Task<ActionResult<Dictionary<string, string>>> ScrapeAndCacheAsync(string vin, CancellationToken cancellationToken)
     {
-        _scrapper.Vin = vin;
         var result = await _scrapper.IdentifyCarByVINAsync(vin);
         result.TryAdd("model_year", vin.GetModelYear().ToString());
 
         if (result.Count <= 17)
         {
-            result = await RequestUsBaseAsync(vin);
+            result = await RequestUsBaseAsync(vin, cancellationToken);
             ParseAndClean(result);
 
             if (result.Count < 17)
@@ -145,10 +150,14 @@ public partial class VinDecoderController : ControllerBase
         return Ok(result);
     }
 
-    private static async Task<Dictionary<string, string>> RequestUsBaseAsync(string vin)
+    private async Task<Dictionary<string, string>> RequestUsBaseAsync(string vin, CancellationToken cancellationToken)
     {
         var url = $"https://vpic.nhtsa.dot.gov/api/vehicles/decodevinextended/{vin}?format=json";
-        var decoded = await url.GetJsonAsync<VinDecodeRoot>();
+        using var client = _httpClientFactory.CreateClient();
+        var decoded = await client.GetFromJsonAsync<VinDecodeRoot>(url, cancellationToken);
+
+        if (decoded?.Results is null)
+            return new Dictionary<string, string>();
 
         var response = new Dictionary<string, string>(decoded.Results.Count);
         foreach (var r in decoded.Results)

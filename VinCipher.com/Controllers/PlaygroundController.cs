@@ -47,9 +47,10 @@ public class PlaygroundController : ControllerBase
         VinDecoderRateLimiter decoderRateLimiter,
         PlaygroundDbContext pgDb,
         VinDecodeCache vinCache,
+        IHttpClientFactory httpClientFactory,
         ILogger<PlaygroundController> logger)
     {
-        _decoder = new VinDecoderController(tokensProvider, vinRushScrapper, decoderRateLimiter, vinCache);
+        _decoder = new VinDecoderController(tokensProvider, vinRushScrapper, decoderRateLimiter, vinCache, httpClientFactory);
         _playgroundToken = configuration["PlaygroundToken"]
             ?? throw new InvalidOperationException("PlaygroundToken is not configured.");
         _rateLimiter = rateLimiter;
@@ -261,7 +262,7 @@ public class PlaygroundController : ControllerBase
     /// Rate-limited by the token's DailyLimit.
     /// </summary>
     [HttpGet("full-decode")]
-    public async Task<ActionResult<Dictionary<string, string>>> FullDecode([FromQuery] string vin)
+    public async Task<ActionResult<Dictionary<string, string>>> FullDecode([FromQuery] string vin, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(vin))
             return BadRequest(new { error = "Le VIN est requis." });
@@ -306,7 +307,7 @@ public class PlaygroundController : ControllerBase
 
         var result = data is not null
             ? new ActionResult<Dictionary<string, string>>(Ok(data))
-            : await _decoder.Decode(_playgroundToken, vin);
+            : await _decoder.Decode(_playgroundToken, vin, cancellationToken);
 
         var elapsed = (int)Stopwatch.GetElapsedTime(startTime).TotalMilliseconds;
 
@@ -355,7 +356,8 @@ public class PlaygroundController : ControllerBase
     public async Task<ActionResult<Dictionary<string, string>>> Decode(
         [FromQuery] string vin,
         [FromQuery(Name = "t")] long timestamp,
-        [FromQuery(Name = "s")] string signature)
+        [FromQuery(Name = "s")] string signature,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(vin))
             return BadRequest("Le VIN est requis.");
@@ -394,7 +396,7 @@ public class PlaygroundController : ControllerBase
 
         var result = cachedData is not null
             ? new ActionResult<Dictionary<string, string>>(Ok(cachedData))
-            : await _decoder.Decode(_playgroundToken, vin);
+            : await _decoder.Decode(_playgroundToken, vin, cancellationToken);
 
         var elapsed = (int)Stopwatch.GetElapsedTime(startTime).TotalMilliseconds;
 
